@@ -34,13 +34,20 @@ Unsafe to publish:
 
 ## Local Loon policy
 
-Use this order for self-maintained rules before broad third-party catchalls:
+Use the generated rules in `rules/loon/generated/` as the subscription source.
+The generator pulls reviewed upstream sources, applies local supplements, and
+drops exact duplicates plus later rules already covered by earlier
+`DOMAIN-SUFFIX` rules.
 
-1. `AccountSafety-DIRECT` -> `DIRECT`.
-2. `Seetong-Local` -> `Seetong`.
-3. `PayPal-Stable` -> `PayPal`.
-4. `FinanceCrypto-Stable` -> `金融加密`.
-5. `AI-Reconnect` -> `AI`.
+High-level generated order:
 
-These rules are intentionally small. Broad coverage should come from reviewed
-external rules after service-specific local safety rules have had priority.
+1. Reject and LAN rules.
+2. `AccountSafety-DIRECT` and mainland direct foundations.
+3. Device/service rules such as `Seetong-Local`.
+4. Stable payment, finance, and crypto rules.
+5. Company/service rules.
+6. Category aggregation rules.
+7. ASN/direct catchalls.
+
+The config should not mix these generated subscriptions with the original
+upstream subscriptions, because that reintroduces duplicate and shadowed rules.

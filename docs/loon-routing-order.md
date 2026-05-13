@@ -19,27 +19,34 @@ This config keeps two layers:
 
 Use this order in `[Remote Rule]`:
 
-1. Ads and LAN.
-2. Self-maintained direct safety: `AccountSafety-DIRECT`.
-3. Mainland direct services: Baidu, WeChat, Tencent, Alibaba, NetEase.
-4. Self-maintained device/service rules: `Seetong-Local`.
-5. Finance and crypto: `PayPal-Stable`, PayPal, `FinanceCrypto-Stable`, Stripe, Binance, OKX, Crypto, Bloomberg.
-6. Adobe: Adobe, AdobeActivation.
-7. AI: `AI-Reconnect`, OpenAI, Claude, Anthropic, Gemini, Copilot, then AI category catchall.
-8. Apple suite: Apple, iCloud, iCloudPrivateRelay, TestFlight, AppleNews, AppleTV, AppleMusic.
-9. Mainland social/media: Xiaohongshu, Weibo, Douyin.
-10. ByteDance split: TikTok before generic ByteDance, so international TikTok does not get swallowed by the mainland ByteDance rule.
-11. Bilibili: BiliBili, BiliBiliIntl.
-12. Telegram: Telegram domain list, then ASN.Telegram.
-13. Microsoft: Microsoft, OneDrive, Teams, Bing, Xbox, LinkedIn.
-14. Meta: Facebook, Instagram, Whatsapp, Threads.
-15. Google: YouTube and YouTubeMusic before GoogleVoice, GoogleDrive, Google.
-16. Developer and social additions: GitHub, GitLab, Docker, X/Twitter, Discord, Reddit, Wikipedia, Dropbox.
-17. Overseas streaming: named platforms first, then `ProxyMedia.list`.
-18. Amazon after PrimeVideo, because the broad Amazon list includes Prime Video and AWS domains.
-19. Talkatone.
-20. ASN.China near the end as the mainland catchall.
-21. `FINAL,全局代理`.
+1. `Ads-Reject`
+2. `LAN-Direct`
+3. `AccountSafety-DIRECT`
+4. `Mainland-Services-Direct`
+5. `Seetong-Local`
+6. `PayPal-Stable`
+7. `FinanceCrypto-Stable`
+8. `Adobe`
+9. `AI`
+10. `Apple`
+11. `RedNote`
+12. `Weibo`
+13. `TikTok`
+14. `Douyin-ByteDance`
+15. `Bilibili`
+16. `Telegram`
+17. `Microsoft`
+18. `Meta`
+19. `YouTube`
+20. `Google`
+21. `GitHub`
+22. `Developer-Collab`
+23. `Global-Social-Info`
+24. `Streaming`
+25. `Amazon`
+26. `Talkatone`
+27. `ChinaASN-Direct`
+28. `FINAL,全局代理`
 
 ## Conflict decisions
 
@@ -51,6 +58,7 @@ Use this order in `[Remote Rule]`:
 - ASN.China stays late so it does not steal explicitly routed global services.
 - Account-sensitive direct rules outrank ad, app-enhancement, and broad category rules.
 - Finance/crypto rules should use a manually selected stable route, not frequent automatic region switching.
+- The original upstream subscriptions are build inputs only. The Loon config should subscribe to generated repository rules to avoid duplicate and shadowed entries.
 
 ## Test command
 
