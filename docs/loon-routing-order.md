@@ -20,24 +20,26 @@ This config keeps two layers:
 Use this order in `[Remote Rule]`:
 
 1. Ads and LAN.
-2. Mainland direct services: Baidu, WeChat, Tencent, Alibaba, NetEase.
-3. Finance and crypto: PayPal, Stripe, Binance, OKX, Crypto, Bloomberg.
-4. Adobe: Adobe, AdobeActivation.
-5. AI: OpenAI, Claude, Anthropic, Gemini, Copilot, then AI category catchall.
-6. Apple suite: Apple, iCloud, iCloudPrivateRelay, TestFlight, AppleNews, AppleTV, AppleMusic.
-7. Mainland social/media: Xiaohongshu, Weibo, Douyin.
-8. ByteDance split: TikTok before generic ByteDance, so international TikTok does not get swallowed by the mainland ByteDance rule.
-9. Bilibili: BiliBili, BiliBiliIntl.
-10. Telegram: Telegram domain list, then ASN.Telegram.
-11. Microsoft: Microsoft, OneDrive, Teams, Bing, Xbox, LinkedIn.
-12. Meta: Facebook, Instagram, Whatsapp, Threads.
-13. Google: YouTube and YouTubeMusic before GoogleVoice, GoogleDrive, Google.
-14. Developer and social additions: GitHub, GitLab, Docker, X/Twitter, Discord, Reddit, Wikipedia, Dropbox.
-15. Overseas streaming: named platforms first, then `ProxyMedia.list`.
-16. Amazon after PrimeVideo, because the broad Amazon list includes Prime Video and AWS domains.
-17. Talkatone.
-18. ASN.China near the end as the mainland catchall.
-19. `FINAL,全局代理`.
+2. Self-maintained direct safety: `AccountSafety-DIRECT`.
+3. Mainland direct services: Baidu, WeChat, Tencent, Alibaba, NetEase.
+4. Self-maintained device/service rules: `Seetong-Local`.
+5. Finance and crypto: `PayPal-Stable`, PayPal, `FinanceCrypto-Stable`, Stripe, Binance, OKX, Crypto, Bloomberg.
+6. Adobe: Adobe, AdobeActivation.
+7. AI: `AI-Reconnect`, OpenAI, Claude, Anthropic, Gemini, Copilot, then AI category catchall.
+8. Apple suite: Apple, iCloud, iCloudPrivateRelay, TestFlight, AppleNews, AppleTV, AppleMusic.
+9. Mainland social/media: Xiaohongshu, Weibo, Douyin.
+10. ByteDance split: TikTok before generic ByteDance, so international TikTok does not get swallowed by the mainland ByteDance rule.
+11. Bilibili: BiliBili, BiliBiliIntl.
+12. Telegram: Telegram domain list, then ASN.Telegram.
+13. Microsoft: Microsoft, OneDrive, Teams, Bing, Xbox, LinkedIn.
+14. Meta: Facebook, Instagram, Whatsapp, Threads.
+15. Google: YouTube and YouTubeMusic before GoogleVoice, GoogleDrive, Google.
+16. Developer and social additions: GitHub, GitLab, Docker, X/Twitter, Discord, Reddit, Wikipedia, Dropbox.
+17. Overseas streaming: named platforms first, then `ProxyMedia.list`.
+18. Amazon after PrimeVideo, because the broad Amazon list includes Prime Video and AWS domains.
+19. Talkatone.
+20. ASN.China near the end as the mainland catchall.
+21. `FINAL,全局代理`.
 
 ## Conflict decisions
 
@@ -47,9 +49,12 @@ Use this order in `[Remote Rule]`:
 - PrimeVideo outranks Amazon.
 - Telegram domain rules outrank ASN.Telegram.
 - ASN.China stays late so it does not steal explicitly routed global services.
+- Account-sensitive direct rules outrank ad, app-enhancement, and broad category rules.
+- Finance/crypto rules should use a manually selected stable route, not frequent automatic region switching.
 
 ## Test command
 
 ```sh
 python3 tools/validate_loon_config.py "/Users/alessiozheng/Library/Mobile Documents/iCloud~com~ruikq~decar/Documents/Configs/20260503-loon.lcf"
+python3 tools/audit_public_artifacts.py .
 ```

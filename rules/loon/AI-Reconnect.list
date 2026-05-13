@@ -1,0 +1,10 @@
+# AI reconnect and browser challenge dependencies
+# Keep these above broad Google/Cloudflare/category rules.
+DOMAIN-SUFFIX,chatgpt.com
+DOMAIN-SUFFIX,openai.com
+DOMAIN-SUFFIX,oaistatic.com
+DOMAIN-SUFFIX,oaiusercontent.com
+DOMAIN-SUFFIX,statsigapi.net
+DOMAIN-SUFFIX,featuregates.org
+DOMAIN-SUFFIX,launchdarkly.com
+DOMAIN,challenges.cloudflare.com

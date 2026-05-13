@@ -13,12 +13,16 @@ from pathlib import Path
 REMOTE_RULE_ORDER = [
     "AWAvenue-Ads-Rule-Surge-RULE-SET.list",
     "LAN@奶思",
+    "AccountSafety-DIRECT",
     "百度",
     "WeChat",
     "Tencent",
     "Alibaba",
     "NetEase",
+    "Seetong-Local",
+    "PayPal-Stable",
     "PayPal",
+    "FinanceCrypto-Stable",
     "Stripe",
     "Binance",
     "OKX",
@@ -26,6 +30,7 @@ REMOTE_RULE_ORDER = [
     "Bloomberg",
     "Adobe",
     "AdobeActivation",
+    "AI-Reconnect",
     "OpenAI",
     "Claude",
     "Anthropic",
@@ -95,17 +100,22 @@ REMOTE_RULE_ORDER = [
 REQUIRED_REMOTE_TAGS = {
     "AWAvenue-Ads-Rule-Surge-RULE-SET.list",
     "LAN@奶思",
+    "AccountSafety-DIRECT",
     "百度",
     "WeChat",
     "Tencent",
     "Alibaba",
+    "Seetong-Local",
+    "PayPal-Stable",
     "PayPal",
+    "FinanceCrypto-Stable",
     "Stripe",
     "Binance",
     "OKX",
     "Crypto",
     "Adobe",
     "AdobeActivation",
+    "AI-Reconnect",
     "OpenAI",
     "Claude",
     "Anthropic",
@@ -141,6 +151,13 @@ REQUIRED_REMOTE_TAGS = {
 }
 
 BUILTIN_POLICIES = {"DIRECT", "REJECT", "REJECT-TINYGIF", "REJECT-DICT", "REJECT-DROP"}
+
+HIGH_RISK_PLUGIN_MARKERS = {
+    "BiliBili.ADBlock.plugin",
+    "BiliBili.Enhanced.plugin",
+    "Disney%2B.plugin",
+    "Netflix.beta.plugin",
+}
 
 
 def parse_sections(text: str) -> dict[str, list[str]]:
@@ -286,6 +303,10 @@ def main() -> int:
         errors.append("AdvertisingLite still uses jsDelivr URL")
     if "raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rewrite/Loon/AdvertisingLite/AdvertisingLite.plugin" not in plugins:
         errors.append("AdvertisingLite raw GitHub URL missing")
+    for line in active_lines(sections.get("Plugin", [])):
+        for marker in HIGH_RISK_PLUGIN_MARKERS:
+            if marker in line and "enabled=false" not in line:
+                errors.append(f"account-risk plugin should be disabled: {marker}")
 
     if errors:
         for error in errors:

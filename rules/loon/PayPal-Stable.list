@@ -1,0 +1,7 @@
+# PayPal stable-route supplements
+# Keep PayPal separate from the broader finance/crypto bucket so it can use a
+# dedicated stable egress when needed.
+
+DOMAIN-SUFFIX,paypal.com
+DOMAIN-SUFFIX,paypalobjects.com
+DOMAIN-SUFFIX,paypal.me
