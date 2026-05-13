@@ -27,6 +27,8 @@ TEXT_SUFFIXES = {
     ".md",
     ".py",
     ".txt",
+    ".yml",
+    ".yaml",
     ".gitignore",
 }
 

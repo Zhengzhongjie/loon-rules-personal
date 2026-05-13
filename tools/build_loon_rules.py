@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
@@ -16,6 +17,8 @@ from urllib.request import Request, urlopen
 USER_AGENT = "codex-loon-rules-builder/1.0"
 RAW_BASE = "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon"
 FETCH_TIMEOUT_SECONDS = 12
+FETCH_RETRIES = 3
+FETCH_RETRY_DELAY_SECONDS = 1.5
 
 
 def blackmatrix(name: str) -> str:
@@ -205,8 +208,18 @@ class SeenRules:
 
 def fetch(url: str) -> str:
     req = Request(url, headers={"User-Agent": USER_AGENT})
-    with urlopen(req, timeout=FETCH_TIMEOUT_SECONDS) as response:
-        return response.read().decode("utf-8", errors="replace")
+    last_error: Exception | None = None
+    for attempt in range(1, FETCH_RETRIES + 1):
+        try:
+            with urlopen(req, timeout=FETCH_TIMEOUT_SECONDS) as response:
+                return response.read().decode("utf-8", errors="replace")
+        except (HTTPError, URLError, TimeoutError, OSError) as exc:
+            last_error = exc
+            if attempt == FETCH_RETRIES:
+                break
+            time.sleep(FETCH_RETRY_DELAY_SECONDS * attempt)
+    assert last_error is not None
+    raise last_error
 
 
 def fetch_all() -> tuple[dict[str, list[str]], list[str]]:
