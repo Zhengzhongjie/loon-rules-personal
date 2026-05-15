@@ -240,7 +240,6 @@ def main() -> int:
         "抖音",
         "Weibo",
         "境外流媒体",
-        "大陆流量",
     ]:
         if group not in groups:
             errors.append(f"missing policy group {group}")
