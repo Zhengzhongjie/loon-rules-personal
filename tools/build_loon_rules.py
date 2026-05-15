@@ -4,11 +4,15 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
+import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
+from http.client import IncompleteRead
+from ipaddress import ip_network
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -16,9 +20,12 @@ from urllib.request import Request, urlopen
 
 USER_AGENT = "codex-loon-rules-builder/1.0"
 RAW_BASE = "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon"
-FETCH_TIMEOUT_SECONDS = 12
+FETCH_TIMEOUT_SECONDS = 30
 FETCH_RETRIES = 3
 FETCH_RETRY_DELAY_SECONDS = 1.5
+FETCH_WORKERS = 4
+FETCH_ERRORS = (HTTPError, URLError, TimeoutError, OSError, IncompleteRead)
+SYSTEM_CURL = Path("/usr/bin/curl")
 
 
 def blackmatrix(name: str) -> str:
@@ -31,6 +38,7 @@ class RuleSet:
     tag: str
     policy: str
     sources: tuple[str, ...] = ()
+    json_prefix_sources: tuple[str, ...] = ()
     additions: tuple[str, ...] = ()
     notes: tuple[str, ...] = ()
     no_resolve: bool = False
@@ -124,15 +132,34 @@ RULESETS: list[RuleSet] = [
         "AI",
         tuple(blackmatrix(name) for name in ("OpenAI", "Claude", "Anthropic", "Gemini", "Copilot"))
         + ("https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/AI.list",),
+        json_prefix_sources=("https://openai.com/chatgpt-voice.json",),
         additions=(
             "DOMAIN-SUFFIX,chatgpt.com",
             "DOMAIN-SUFFIX,openai.com",
             "DOMAIN-SUFFIX,oaistatic.com",
             "DOMAIN-SUFFIX,oaiusercontent.com",
+            "DOMAIN-SUFFIX,ct.sendgrid.net",
+            "DOMAIN-SUFFIX,statsig.com",
             "DOMAIN-SUFFIX,statsigapi.net",
             "DOMAIN-SUFFIX,featuregates.org",
             "DOMAIN-SUFFIX,launchdarkly.com",
+            "DOMAIN,cdn.openaimerge.com",
+            "DOMAIN,cdn.workos.com",
             "DOMAIN,challenges.cloudflare.com",
+            "DOMAIN,featureassets.org",
+            "DOMAIN,forwarder.workos.com",
+            "DOMAIN,humb.apple.com",
+            "DOMAIN,images.workoscdn.com",
+            "DOMAIN,o207216.ingest.sentry.io",
+            "DOMAIN,o33249.ingest.sentry.io",
+            "DOMAIN,prodregistryv2.org",
+            "DOMAIN,rum.browser-intake-datadoghq.com",
+            "DOMAIN,setup.workos.com",
+            "DOMAIN,workos.imgix.net",
+        ),
+        notes=(
+            "ChatGPT/OpenAI supplemental domains mirror the official OpenAI network recommendations.",
+            "ChatGPT Voice IP prefixes are generated from https://openai.com/chatgpt-voice.json.",
         ),
     ),
     RuleSet(
@@ -177,7 +204,7 @@ RULESETS: list[RuleSet] = [
     RuleSet(
         "26-ChinaASN-Direct.list",
         "ChinaASN-Direct",
-        "大陆流量",
+        "DIRECT",
         ("https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/ruleset/ASN.China.list",),
         no_resolve=True,
         drop_if_covered=False,
@@ -213,8 +240,10 @@ def fetch(url: str) -> str:
         try:
             with urlopen(req, timeout=FETCH_TIMEOUT_SECONDS) as response:
                 return response.read().decode("utf-8", errors="replace")
-        except (HTTPError, URLError, TimeoutError, OSError) as exc:
+        except FETCH_ERRORS as exc:
             last_error = exc
+            if SYSTEM_CURL.exists() and "CERTIFICATE_VERIFY_FAILED" in str(exc):
+                return fetch_with_system_curl(url)
             if attempt == FETCH_RETRIES:
                 break
             time.sleep(FETCH_RETRY_DELAY_SECONDS * attempt)
@@ -222,22 +251,87 @@ def fetch(url: str) -> str:
     raise last_error
 
 
-def fetch_all() -> tuple[dict[str, list[str]], list[str]]:
+def fetch_with_system_curl(url: str) -> str:
+    try:
+        result = subprocess.run(
+            [
+                str(SYSTEM_CURL),
+                "--fail",
+                "--location",
+                "--silent",
+                "--show-error",
+                "--http1.1",
+                "--max-time",
+                str(FETCH_TIMEOUT_SECONDS),
+                "--connect-timeout",
+                "8",
+                "--retry",
+                "2",
+                "--retry-delay",
+                "1",
+                "--retry-all-errors",
+                "--user-agent",
+                USER_AGENT,
+                url,
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=FETCH_TIMEOUT_SECONDS + 3,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise URLError(f"system curl fallback failed: {exc}") from exc
+    if result.returncode != 0:
+        detail = result.stderr.strip() or f"exit {result.returncode}"
+        raise URLError(f"system curl fallback failed: {detail}")
+    return result.stdout
+
+
+def fetch_all() -> tuple[dict[str, str], list[str]]:
     urls: list[str] = []
     for ruleset in RULESETS:
         urls.extend(ruleset.sources)
+        urls.extend(ruleset.json_prefix_sources)
     unique_urls = sorted(set(urls))
-    contents: dict[str, list[str]] = {}
+    contents: dict[str, str] = {}
     failures: list[str] = []
-    with ThreadPoolExecutor(max_workers=18) as pool:
+    with ThreadPoolExecutor(max_workers=FETCH_WORKERS) as pool:
         future_to_url = {pool.submit(fetch, url): url for url in unique_urls}
         for future in as_completed(future_to_url):
             url = future_to_url[future]
             try:
-                contents[url] = future.result().splitlines()
-            except (HTTPError, URLError, TimeoutError, OSError) as exc:
+                contents[url] = future.result()
+            except FETCH_ERRORS as exc:
                 failures.append(f"{url}: {type(exc).__name__}: {exc}")
     return contents, failures
+
+
+def json_prefix_rules(raw: str, source: str) -> list[str]:
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"invalid JSON: {exc}") from exc
+
+    prefixes = data.get("prefixes")
+    if not isinstance(prefixes, list):
+        raise ValueError("missing prefixes list")
+
+    rules: list[str] = []
+    for index, item in enumerate(prefixes):
+        if not isinstance(item, dict):
+            raise ValueError(f"prefix entry {index} is not an object")
+        for key, rule_type in (("ipv4Prefix", "IP-CIDR"), ("ipv6Prefix", "IP-CIDR6")):
+            prefix = item.get(key)
+            if prefix is None:
+                continue
+            if not isinstance(prefix, str) or not prefix:
+                raise ValueError(f"prefix entry {index} has invalid {key}")
+            ip_network(prefix, strict=False)
+            rules.append(f"{rule_type},{prefix},no-resolve")
+
+    if not rules:
+        raise ValueError(f"no IP prefixes found in {source}")
+    return rules
 
 
 def normalize_line(raw: str) -> str | None:
@@ -279,17 +373,12 @@ def split_rule(line: str) -> tuple[str, str]:
     return parts[0], parts[1]
 
 
-def build(output_dir: Path, strict: bool) -> int:
-    output_dir.mkdir(parents=True, exist_ok=True)
-    for stale in output_dir.glob("*.list"):
-        stale.unlink()
-    manifest_path = output_dir / "MANIFEST.csv"
-    if manifest_path.exists():
-        manifest_path.unlink()
+def build(output_dir: Path, strict: bool, allow_partial: bool = False) -> int:
     seen = SeenRules()
     source_contents, failures = fetch_all()
     duplicate_count = 0
     covered_count = 0
+    generated_files: dict[str, str] = {}
     manifest: list[str] = [
         "# Generated Loon rules manifest",
         "# Do not include proxy nodes, subscriptions, certificates, or secrets.",
@@ -299,8 +388,16 @@ def build(output_dir: Path, strict: bool) -> int:
     for ruleset in RULESETS:
         raw_lines: list[str] = []
         for source in ruleset.sources:
-            raw_lines.extend(source_contents.get(source, []))
+            raw_lines.extend(source_contents.get(source, "").splitlines())
         raw_lines.extend(ruleset.additions)
+        for source in ruleset.json_prefix_sources:
+            raw = source_contents.get(source)
+            if raw is None:
+                continue
+            try:
+                raw_lines.extend(json_prefix_rules(raw, source))
+            except ValueError as exc:
+                failures.append(f"{source}: JSON_PARSE: {exc}")
 
         kept: list[str] = []
         local_seen: set[str] = set()
@@ -326,7 +423,6 @@ def build(output_dir: Path, strict: bool) -> int:
             kept.append(normalized)
             seen.add(rule_type, value, ruleset.tag)
 
-        out_path = output_dir / ruleset.file
         header = [
             f"# {ruleset.tag}",
             "# Generated by tools/build_loon_rules.py.",
@@ -334,18 +430,31 @@ def build(output_dir: Path, strict: bool) -> int:
             f"# Policy: {ruleset.policy}",
         ]
         header.extend(f"# {note}" for note in ruleset.notes)
-        out_path.write_text("\n".join(header + [""] + kept) + "\n")
+        generated_files[ruleset.file] = "\n".join(header + [""] + kept) + "\n"
         manifest.append(f"{ruleset.tag},{ruleset.policy},rules/loon/generated/{ruleset.file},{len(kept)}")
 
-    (output_dir / "MANIFEST.csv").write_text("\n".join(manifest) + "\n")
-    print(f"generated={len(RULESETS)}")
-    print(f"duplicates_dropped={duplicate_count}")
-    print(f"covered_later_rules_dropped={covered_count}")
     if failures:
         for failure in failures:
             print(f"FETCH_FAIL: {failure}", file=sys.stderr)
-        if strict:
+        if not allow_partial:
+            print("FAIL: refusing to overwrite generated rules after upstream fetch or parse failures", file=sys.stderr)
             return 1
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for stale in output_dir.glob("*.list"):
+        stale.unlink()
+    manifest_path = output_dir / "MANIFEST.csv"
+    if manifest_path.exists():
+        manifest_path.unlink()
+    for file_name, text in generated_files.items():
+        (output_dir / file_name).write_text(text)
+    manifest_path.write_text("\n".join(manifest) + "\n")
+
+    print(f"generated={len(RULESETS)}")
+    print(f"duplicates_dropped={duplicate_count}")
+    print(f"covered_later_rules_dropped={covered_count}")
+    if failures and strict:
+        return 1
     return 0
 
 
@@ -353,8 +462,15 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", type=Path, default=Path("rules/loon/generated"))
     parser.add_argument("--strict", action="store_true")
+    parser.add_argument(
+        "--allow-partial",
+        action="store_true",
+        help="write partial generated output even if upstream fetches or JSON parsing fail",
+    )
     args = parser.parse_args()
-    return build(args.output_dir, args.strict)
+    if args.strict and args.allow_partial:
+        parser.error("--strict cannot be combined with --allow-partial")
+    return build(args.output_dir, args.strict, args.allow_partial)
 
 
 if __name__ == "__main__":
