@@ -9,7 +9,7 @@ Seetong-Local,Seetong,rules/loon/generated/04-Seetong.list,2
 PayPal-Stable,PayPal,rules/loon/generated/05-PayPal-Stable.list,247
 FinanceCrypto-Stable,金融加密,rules/loon/generated/06-FinanceCrypto-Stable.list,241
 Adobe,Adobe,rules/loon/generated/07-Adobe.list,185
-AI,AI,rules/loon/generated/08-AI.list,93
+AI,AI,rules/loon/generated/08-AI.list,128
 Apple,Apple,rules/loon/generated/09-Apple.list,118
 RedNote,RedNote,rules/loon/generated/10-RedNote.list,4
 Weibo,Weibo,rules/loon/generated/11-Weibo.list,3
@@ -27,4 +27,4 @@ Global-Social-Info,海外社交资讯,rules/loon/generated/22-Global-Social-Info
 Streaming,境外流媒体,rules/loon/generated/23-Streaming.list,1672
 Amazon,Amazon,rules/loon/generated/24-Amazon.list,188
 Talkatone,全局代理,rules/loon/generated/25-Talkatone.list,6
-ChinaASN-Direct,大陆流量,rules/loon/generated/26-ChinaASN-Direct.list,5076
+ChinaASN-Direct,DIRECT,rules/loon/generated/26-ChinaASN-Direct.list,5076
