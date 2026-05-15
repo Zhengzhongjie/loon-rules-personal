@@ -14,7 +14,7 @@ of private material. The full `.lcf` file was not copied into this repository.
   category rules.
 - Kept PayPal separate from the broader finance/crypto group for stable egress.
 - Reduced `[Rule]` to `FINAL,全局代理`; service rules now live in generated remote subscriptions.
-- Enabled DNS hijack and corrected `ip-mode` to `ipv4-only`; IPv6 remains off for stability testing.
+- Enabled DNS hijack and corrected `ip-mode` to `v4-only`; IPv6 remains off for stability testing.
 - Disabled optional high-risk app business-request rewrite plugins:
   - BiliBili ADBlock
   - BiliBili Enhanced

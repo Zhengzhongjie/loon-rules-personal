@@ -204,8 +204,8 @@ def main() -> int:
         errors.append("missing General skip-proxy")
     if "bypass-tun =" not in general:
         errors.append("missing General bypass-tun")
-    if "ip-mode = ipv4-only" not in general:
-        errors.append("ip-mode should be ipv4-only while IPv6 is being tested off")
+    if not re.search(r"(?m)^\s*ip-mode\s*=\s*(?:v4-only|ipv4-only)\s*$", general):
+        errors.append("ip-mode should be v4-only while IPv6 is being tested off")
     if "ipv6-vif = off" not in general:
         errors.append("ipv6-vif should stay off during stability testing")
     if "hijack-dns =" not in general:
