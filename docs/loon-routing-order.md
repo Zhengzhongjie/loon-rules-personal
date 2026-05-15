@@ -8,7 +8,6 @@ This config keeps two layers:
 ## Recommended policy groups
 
 - `广告分流`: `REJECT`, then `DIRECT`.
-- `大陆流量`: `DIRECT`, with proxy choices only for emergency override.
 - `Seetong`: `DIRECT` first for camera latency and LAN-like behavior, then proxy choices.
 - `Adobe`: `DIRECT` first unless Adobe account or regional access requires proxy.
 - `Apple`: `DIRECT` first, then proxy choices.
@@ -55,7 +54,7 @@ Use this order in `[Remote Rule]`:
 - TikTok outranks ByteDance.
 - PrimeVideo outranks Amazon.
 - Telegram domain rules outrank ASN.Telegram.
-- ASN.China stays late so it does not steal explicitly routed global services.
+- ASN.China stays late and uses hard `DIRECT` so it does not steal explicitly routed global services or expose mainland catchall traffic to manual proxy selection.
 - Account-sensitive direct rules outrank ad, app-enhancement, and broad category rules.
 - Finance/crypto rules should use a manually selected stable route, not frequent automatic region switching.
 - The original upstream subscriptions are build inputs only. The Loon config should subscribe to generated repository rules to avoid duplicate and shadowed entries.
