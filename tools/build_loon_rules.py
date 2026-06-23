@@ -373,19 +373,39 @@ def split_rule(line: str) -> tuple[str, str]:
     return parts[0], parts[1]
 
 
-def build(output_dir: Path, strict: bool, allow_partial: bool = False) -> int:
+@dataclass(frozen=True)
+class CompileStats:
+    generated: int
+    duplicates_dropped: int
+    covered_dropped: int
+
+
+@dataclass(frozen=True)
+class CompileResult:
+    files: dict[str, str]
+    stats: CompileStats
+    failures: list[str]
+
+
+def compile_rules(rulesets: list[RuleSet], source_contents: dict[str, str]) -> CompileResult:
+    """Pure transform: fetched content in, generated files + stats + parse failures out.
+
+    Knows nothing about the network or the filesystem. Reports only the failures it can
+    observe while transforming (JSON-prefix parse errors); fetch failures belong to the
+    caller. Same inputs always yield the same result, so it is testable without I/O.
+    """
     seen = SeenRules()
-    source_contents, failures = fetch_all()
     duplicate_count = 0
     covered_count = 0
-    generated_files: dict[str, str] = {}
+    failures: list[str] = []
+    files: dict[str, str] = {}
     manifest: list[str] = [
         "# Generated Loon rules manifest",
         "# Do not include proxy nodes, subscriptions, certificates, or secrets.",
         "",
     ]
 
-    for ruleset in RULESETS:
+    for ruleset in rulesets:
         raw_lines: list[str] = []
         for source in ruleset.sources:
             raw_lines.extend(source_contents.get(source, "").splitlines())
@@ -430,8 +450,47 @@ def build(output_dir: Path, strict: bool, allow_partial: bool = False) -> int:
             f"# Policy: {ruleset.policy}",
         ]
         header.extend(f"# {note}" for note in ruleset.notes)
-        generated_files[ruleset.file] = "\n".join(header + [""] + kept) + "\n"
+        files[ruleset.file] = "\n".join(header + [""] + kept) + "\n"
         manifest.append(f"{ruleset.tag},{ruleset.policy},rules/loon/generated/{ruleset.file},{len(kept)}")
+
+    files["MANIFEST.csv"] = "\n".join(manifest) + "\n"
+    return CompileResult(
+        files=files,
+        stats=CompileStats(
+            generated=len(rulesets),
+            duplicates_dropped=duplicate_count,
+            covered_dropped=covered_count,
+        ),
+        failures=failures,
+    )
+
+
+def stats_lines(stats: CompileStats) -> list[str]:
+    """Human-readable stat lines shared by the build shell and the drift checker."""
+    return [
+        f"generated={stats.generated}",
+        f"duplicates_dropped={stats.duplicates_dropped}",
+        f"covered_later_rules_dropped={stats.covered_dropped}",
+    ]
+
+
+def write_result(output_dir: Path, files: dict[str, str]) -> None:
+    """Replace the generated artefacts on disk with ``files``. No policy, no decisions."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for stale in output_dir.glob("*.list"):
+        stale.unlink()
+    manifest_path = output_dir / "MANIFEST.csv"
+    if manifest_path.exists():
+        manifest_path.unlink()
+    for file_name, text in files.items():
+        (output_dir / file_name).write_text(text)
+
+
+def build(output_dir: Path, strict: bool, allow_partial: bool = False) -> int:
+    """Compose fetch -> compile -> write, and own the write/exit-code policy."""
+    source_contents, fetch_failures = fetch_all()
+    result = compile_rules(RULESETS, source_contents)
+    failures = fetch_failures + result.failures
 
     if failures:
         for failure in failures:
@@ -440,19 +499,10 @@ def build(output_dir: Path, strict: bool, allow_partial: bool = False) -> int:
             print("FAIL: refusing to overwrite generated rules after upstream fetch or parse failures", file=sys.stderr)
             return 1
 
-    output_dir.mkdir(parents=True, exist_ok=True)
-    for stale in output_dir.glob("*.list"):
-        stale.unlink()
-    manifest_path = output_dir / "MANIFEST.csv"
-    if manifest_path.exists():
-        manifest_path.unlink()
-    for file_name, text in generated_files.items():
-        (output_dir / file_name).write_text(text)
-    manifest_path.write_text("\n".join(manifest) + "\n")
+    write_result(output_dir, result.files)
 
-    print(f"generated={len(RULESETS)}")
-    print(f"duplicates_dropped={duplicate_count}")
-    print(f"covered_later_rules_dropped={covered_count}")
+    for line in stats_lines(result.stats):
+        print(line)
     if failures and strict:
         return 1
     return 0

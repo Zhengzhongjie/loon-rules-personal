@@ -4,10 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import contextlib
 import difflib
-import io
-import tempfile
 from pathlib import Path
 
 import build_loon_rules
@@ -25,13 +22,11 @@ def public_files(root: Path) -> dict[str, Path]:
     }
 
 
-def unified_diff(current: Path | None, rebuilt: Path | None, rel_path: str) -> list[str]:
-    current_lines = current.read_text().splitlines(keepends=True) if current else []
-    rebuilt_lines = rebuilt.read_text().splitlines(keepends=True) if rebuilt else []
+def unified_diff(current_text: str, rebuilt_text: str, rel_path: str) -> list[str]:
     return list(
         difflib.unified_diff(
-            current_lines,
-            rebuilt_lines,
+            current_text.splitlines(keepends=True),
+            rebuilt_text.splitlines(keepends=True),
             fromfile=f"current/{rel_path}",
             tofile=f"rebuilt/{rel_path}",
         )
@@ -40,7 +35,7 @@ def unified_diff(current: Path | None, rebuilt: Path | None, rel_path: str) -> l
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Rebuild generated Loon rules in a temporary directory and report upstream drift."
+        description="Rebuild generated Loon rules in memory and report upstream drift."
     )
     parser.add_argument("--generated-dir", type=Path, default=DEFAULT_GENERATED_DIR)
     parser.add_argument("--diff", action="store_true", help="print a bounded unified diff for changed files")
@@ -52,53 +47,52 @@ def main() -> int:
         print(f"FAIL: generated rule directory does not exist: {generated_dir}")
         return 1
 
-    with tempfile.TemporaryDirectory(prefix="loon-rule-drift-") as tmp:
-        rebuilt_dir = Path(tmp) / "generated"
-        captured = io.StringIO()
-        with contextlib.redirect_stdout(captured):
-            build_status = build_loon_rules.build(rebuilt_dir, strict=True)
-        print(captured.getvalue().strip())
-        if build_status != 0:
-            print("FAIL: strict rebuild failed; cannot assess drift")
-            return build_status
+    contents, fetch_failures = build_loon_rules.fetch_all()
+    result = build_loon_rules.compile_rules(build_loon_rules.RULESETS, contents)
+    failures = fetch_failures + result.failures
+    if failures:
+        for failure in failures:
+            print(f"FETCH_FAIL: {failure}")
+        print("FAIL: cannot assess drift after upstream fetch or parse failures")
+        return 1
 
-        current_files = public_files(generated_dir)
-        rebuilt_files = public_files(rebuilt_dir)
-        current_names = set(current_files)
-        rebuilt_names = set(rebuilt_files)
+    print("\n".join(build_loon_rules.stats_lines(result.stats)))
 
-        added = sorted(rebuilt_names - current_names)
-        removed = sorted(current_names - rebuilt_names)
-        changed = sorted(
-            name
-            for name in current_names & rebuilt_names
-            if current_files[name].read_text() != rebuilt_files[name].read_text()
-        )
+    current_files = {name: path.read_text() for name, path in public_files(generated_dir).items()}
+    rebuilt_files = result.files
+    current_names = set(current_files)
+    rebuilt_names = set(rebuilt_files)
 
-        if not (added or removed or changed):
-            print("OK: generated Loon rules match the current upstream snapshot")
-            return 0
+    added = sorted(rebuilt_names - current_names)
+    removed = sorted(current_names - rebuilt_names)
+    changed = sorted(
+        name for name in current_names & rebuilt_names if current_files[name] != rebuilt_files[name]
+    )
 
-        print("DRIFT: generated Loon rules differ from the current upstream snapshot")
-        if added:
-            print("added: " + ", ".join(added))
-        if removed:
-            print("removed: " + ", ".join(removed))
-        if changed:
-            print("changed: " + ", ".join(changed))
+    if not (added or removed or changed):
+        print("OK: generated Loon rules match the current upstream snapshot")
+        return 0
 
-        if args.diff:
-            printed = 0
-            for name in added + removed + changed:
-                diff_lines = unified_diff(current_files.get(name), rebuilt_files.get(name), name)
-                for line in diff_lines:
-                    if printed >= args.max_diff_lines:
-                        print(f"... diff truncated after {args.max_diff_lines} lines")
-                        return 2
-                    print(line, end="")
-                    printed += 1
+    print("DRIFT: generated Loon rules differ from the current upstream snapshot")
+    if added:
+        print("added: " + ", ".join(added))
+    if removed:
+        print("removed: " + ", ".join(removed))
+    if changed:
+        print("changed: " + ", ".join(changed))
 
-        return 2
+    if args.diff:
+        printed = 0
+        for name in added + removed + changed:
+            diff_lines = unified_diff(current_files.get(name, ""), rebuilt_files.get(name, ""), name)
+            for line in diff_lines:
+                if printed >= args.max_diff_lines:
+                    print(f"... diff truncated after {args.max_diff_lines} lines")
+                    return 2
+                print(line, end="")
+                printed += 1
+
+    return 2
 
 
 if __name__ == "__main__":
