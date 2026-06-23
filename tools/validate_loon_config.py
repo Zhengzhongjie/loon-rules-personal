@@ -10,38 +10,16 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+import build_loon_rules
 from rulegrammar import CoverageIndex, parse_rule
 
 
-REMOTE_RULE_ORDER = [
-    "Ads-Reject",
-    "LAN-Direct",
-    "AccountSafety-DIRECT",
-    "Mainland-Services-Direct",
-    "Seetong-Local",
-    "PayPal-Stable",
-    "FinanceCrypto-Stable",
-    "Adobe",
-    "AI",
-    "Apple",
-    "RedNote",
-    "Weibo",
-    "TikTok",
-    "Douyin-ByteDance",
-    "Bilibili",
-    "Telegram",
-    "Microsoft",
-    "Meta",
-    "YouTube",
-    "Google",
-    "GitHub",
-    "Developer-Collab",
-    "Global-Social-Info",
-    "Streaming",
-    "Amazon",
-    "Talkatone",
-    "ChinaASN-Direct",
-]
+# The intended remote-rule order is the builder's RULESETS order — the single
+# source of truth. Deriving it here (instead of re-typing 27 tags) stops the
+# validator and builder from drifting. RULESETS is the build-time authored
+# intent, not the generated MANIFEST, so validate still checks output (the
+# manifest and the .lcf) against an oracle independent of those artifacts.
+REMOTE_RULE_ORDER = [ruleset.tag for ruleset in build_loon_rules.RULESETS]
 
 REQUIRED_REMOTE_TAGS = set(REMOTE_RULE_ORDER)
 
