@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 from rulegrammar import CoverageIndex, parse_rule
@@ -83,40 +84,45 @@ def group_names(lines: list[str]) -> set[str]:
     return names
 
 
-def remote_rule_tags(lines: list[str]) -> list[str]:
-    tags: list[str] = []
-    for line in active_lines(lines):
-        match = re.search(r"(?:^|,\s*)tag=([^,]+)", line)
-        if match:
-            tags.append(match.group(1).strip())
-    return tags
+@dataclass(frozen=True)
+class RemoteRule:
+    url: str | None
+    tag: str | None
+    policy: str | None
 
 
-def remote_rule_policies(lines: list[str]) -> list[str]:
-    policies: list[str] = []
-    for line in active_lines(lines):
-        match = re.search(r"(?:^|,\s*)policy=([^,]+)", line)
-        if match:
-            policies.append(match.group(1).strip())
-    return policies
+@dataclass(frozen=True)
+class LoonConfig:
+    section_names: frozenset[str]
+    general_text: str
+    policy_groups: frozenset[str]
+    rule_lines: list[str]
+    remote_rules: list[RemoteRule]
+    plugin_lines: list[str]
 
 
-def remote_rule_urls(lines: list[str]) -> list[str]:
-    urls: list[str] = []
-    for line in active_lines(lines):
-        if line.startswith("http://") or line.startswith("https://"):
-            urls.append(line.split(",", 1)[0].strip())
-    return urls
+def _first(pattern: str, line: str) -> str | None:
+    match = re.search(pattern, line)
+    return match.group(1).strip() if match else None
 
 
-def remote_rule_tag_policies(lines: list[str]) -> dict[str, str]:
-    policies: dict[str, str] = {}
-    for line in active_lines(lines):
-        tag_match = re.search(r"(?:^|,\s*)tag=([^,]+)", line)
-        policy_match = re.search(r"(?:^|,\s*)policy=([^,]+)", line)
-        if tag_match and policy_match:
-            policies[tag_match.group(1).strip()] = policy_match.group(1).strip()
-    return policies
+def parse_remote_rule(line: str) -> RemoteRule:
+    url = line.split(",", 1)[0].strip() if line.startswith(("http://", "https://")) else None
+    return RemoteRule(url, _first(r"(?:^|,\s*)tag=([^,]+)", line), _first(r"(?:^|,\s*)policy=([^,]+)", line))
+
+
+def parse_loon_config(text: str) -> LoonConfig:
+    sections = parse_sections(text)
+    return LoonConfig(
+        section_names=frozenset(sections),
+        general_text="\n".join(sections.get("General", [])),
+        policy_groups=frozenset(
+            group_names(sections.get("Proxy Group", [])) | group_names(sections.get("Proxy Chain", []))
+        ),
+        rule_lines=active_lines(sections.get("Rule", [])),
+        remote_rules=[parse_remote_rule(line) for line in active_lines(sections.get("Remote Rule", []))],
+        plugin_lines=active_lines(sections.get("Plugin", [])),
+    )
 
 
 def manifest_entries() -> list[tuple[str, str, Path]]:
@@ -166,20 +172,42 @@ def validate_generated_rules(errors: list[str]) -> None:
             index.add(rule, tag)
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("config", type=Path)
-    args = parser.parse_args()
+REQUIRED_SECTIONS = ["General", "Proxy Group", "Remote Filter", "Proxy Chain", "Rule", "Remote Rule", "Plugin", "Mitm"]
 
-    text = args.config.read_text()
-    sections = parse_sections(text)
+REQUIRED_POLICY_GROUPS = [
+    "全局代理",
+    "广告分流",
+    "Adobe",
+    "AI",
+    "PayPal",
+    "金融加密",
+    "Seetong",
+    "Amazon",
+    "Apple",
+    "YouTube",
+    "Google",
+    "GitHub",
+    "开发协作",
+    "海外社交资讯",
+    "Microsoft",
+    "Meta",
+    "Telegram",
+    "TikTok",
+    "Bilibili",
+    "RedNote",
+    "抖音",
+    "Weibo",
+    "境外流媒体",
+]
+
+
+def check_required_sections(cfg: LoonConfig) -> list[str]:
+    return [f"missing section [{name}]" for name in REQUIRED_SECTIONS if name not in cfg.section_names]
+
+
+def check_general(cfg: LoonConfig) -> list[str]:
     errors: list[str] = []
-
-    for section in ["General", "Proxy Group", "Remote Filter", "Proxy Chain", "Rule", "Remote Rule", "Plugin", "Mitm"]:
-        if section not in sections:
-            errors.append(f"missing section [{section}]")
-
-    general = "\n".join(sections.get("General", []))
+    general = cfg.general_text
     if "skip-proxy =" not in general:
         errors.append("missing General skip-proxy")
     if "bypass-tun =" not in general:
@@ -190,42 +218,22 @@ def main() -> int:
         errors.append("ipv6-vif should stay off during stability testing")
     if "hijack-dns =" not in general:
         errors.append("DNS hijack should be enabled for the fake-IP rule system")
+    return errors
 
-    rule_lines = active_lines(sections.get("Rule", []))
-    if rule_lines != ["FINAL,全局代理"]:
-        errors.append("[Rule] should contain only FINAL; service rules belong in generated remote subscriptions")
 
-    groups = group_names(sections.get("Proxy Group", [])) | group_names(sections.get("Proxy Chain", []))
-    for group in [
-        "全局代理",
-        "广告分流",
-        "Adobe",
-        "AI",
-        "PayPal",
-        "金融加密",
-        "Seetong",
-        "Amazon",
-        "Apple",
-        "YouTube",
-        "Google",
-        "GitHub",
-        "开发协作",
-        "海外社交资讯",
-        "Microsoft",
-        "Meta",
-        "Telegram",
-        "TikTok",
-        "Bilibili",
-        "RedNote",
-        "抖音",
-        "Weibo",
-        "境外流媒体",
-    ]:
-        if group not in groups:
-            errors.append(f"missing policy group {group}")
+def check_rule_section(cfg: LoonConfig) -> list[str]:
+    if cfg.rule_lines != ["FINAL,全局代理"]:
+        return ["[Rule] should contain only FINAL; service rules belong in generated remote subscriptions"]
+    return []
 
-    remote_lines = sections.get("Remote Rule", [])
-    tags = remote_rule_tags(remote_lines)
+
+def check_policy_groups(cfg: LoonConfig) -> list[str]:
+    return [f"missing policy group {group}" for group in REQUIRED_POLICY_GROUPS if group not in cfg.policy_groups]
+
+
+def check_remote_tags(cfg: LoonConfig) -> list[str]:
+    errors: list[str] = []
+    tags = [rule.tag for rule in cfg.remote_rules if rule.tag]
     missing_tags = sorted(REQUIRED_REMOTE_TAGS - set(tags))
     if missing_tags:
         errors.append("missing remote tags: " + ", ".join(missing_tags))
@@ -234,44 +242,78 @@ def main() -> int:
         errors.append("unexpected remote tags: " + ", ".join(extra_tags))
     if tags != REMOTE_RULE_ORDER:
         errors.append("remote rule tags must exactly match generated priority order")
-
     order_positions = [tags.index(tag) for tag in REMOTE_RULE_ORDER if tag in tags]
     if order_positions != sorted(order_positions):
         errors.append("remote rule tags are not in expected priority order")
+    return errors
 
-    urls = remote_rule_urls(remote_lines)
+
+def check_remote_urls(cfg: LoonConfig) -> list[str]:
+    errors: list[str] = []
+    urls = [rule.url for rule in cfg.remote_rules if rule.url]
     duplicate_urls = sorted({url for url in urls if urls.count(url) > 1})
     if duplicate_urls:
         errors.append("duplicate remote rule URLs: " + ", ".join(duplicate_urls))
     for url in urls:
         if not url.startswith(GENERATED_RAW_PREFIX):
             errors.append(f"remote rule should use generated repo subscription, got: {url}")
+    return errors
 
-    allowed_policies = groups | BUILTIN_POLICIES
-    unresolved = sorted({policy for policy in remote_rule_policies(remote_lines) if policy not in allowed_policies})
+
+def check_remote_policies(cfg: LoonConfig) -> list[str]:
+    allowed_policies = cfg.policy_groups | BUILTIN_POLICIES
+    policies = [rule.policy for rule in cfg.remote_rules if rule.policy]
+    unresolved = sorted({policy for policy in policies if policy not in allowed_policies})
     if unresolved:
-        errors.append("remote rules reference missing policies: " + ", ".join(unresolved))
-    manifest_policies = {tag: policy for tag, policy, _path in manifest_entries()}
-    actual_policies = remote_rule_tag_policies(remote_lines)
+        return ["remote rules reference missing policies: " + ", ".join(unresolved)]
+    return []
+
+
+def check_remote_tag_policies(cfg: LoonConfig, manifest_policies: dict[str, str]) -> list[str]:
+    actual_policies = {rule.tag: rule.policy for rule in cfg.remote_rules if rule.tag and rule.policy}
     policy_mismatches = sorted(
         f"{tag}: expected {policy}, got {actual_policies.get(tag)}"
         for tag, policy in manifest_policies.items()
         if actual_policies.get(tag) != policy
     )
     if policy_mismatches:
-        errors.append("remote tag policy mismatch: " + "; ".join(policy_mismatches))
+        return ["remote tag policy mismatch: " + "; ".join(policy_mismatches)]
+    return []
 
-    validate_generated_rules(errors)
 
-    plugins = "\n".join(active_lines(sections.get("Plugin", [])))
+def check_plugins(cfg: LoonConfig) -> list[str]:
+    errors: list[str] = []
+    plugins = "\n".join(cfg.plugin_lines)
     if "cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rewrite/Loon/AdvertisingLite" in plugins:
         errors.append("AdvertisingLite still uses jsDelivr URL")
     if "raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rewrite/Loon/AdvertisingLite/AdvertisingLite.plugin" not in plugins:
         errors.append("AdvertisingLite raw GitHub URL missing")
-    for line in active_lines(sections.get("Plugin", [])):
+    for line in cfg.plugin_lines:
         for marker in HIGH_RISK_PLUGIN_MARKERS:
             if marker in line and "enabled=false" not in line:
                 errors.append(f"account-risk plugin should be disabled: {marker}")
+    return errors
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config", type=Path)
+    args = parser.parse_args()
+
+    cfg = parse_loon_config(args.config.read_text())
+    manifest_policies = {tag: policy for tag, policy, _path in manifest_entries()}
+
+    errors: list[str] = []
+    errors += check_required_sections(cfg)
+    errors += check_general(cfg)
+    errors += check_rule_section(cfg)
+    errors += check_policy_groups(cfg)
+    errors += check_remote_tags(cfg)
+    errors += check_remote_urls(cfg)
+    errors += check_remote_policies(cfg)
+    errors += check_remote_tag_policies(cfg, manifest_policies)
+    validate_generated_rules(errors)
+    errors += check_plugins(cfg)
 
     if errors:
         for error in errors:
