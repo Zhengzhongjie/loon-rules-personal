@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import subprocess
 import sys
 import time
@@ -16,6 +15,8 @@ from ipaddress import ip_network
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+
+from rulegrammar import CoverageIndex, Rule, parse_rule, render_rule
 
 
 USER_AGENT = "codex-loon-rules-builder/1.0"
@@ -212,27 +213,6 @@ RULESETS: list[RuleSet] = [
 ]
 
 
-class SeenRules:
-    def __init__(self) -> None:
-        self.exact: dict[tuple[str, str], str] = {}
-        self.suffixes: list[tuple[str, str]] = []
-
-    def covered_by_suffix(self, rule_type: str, value: str) -> str | None:
-        if rule_type not in {"DOMAIN", "DOMAIN-SUFFIX"}:
-            return None
-        domain = value.lower().strip(".")
-        for suffix, tag in self.suffixes:
-            if domain == suffix or domain.endswith("." + suffix):
-                return tag
-        return None
-
-    def add(self, rule_type: str, value: str, tag: str) -> None:
-        key = (rule_type, value.lower())
-        self.exact[key] = tag
-        if rule_type == "DOMAIN-SUFFIX":
-            self.suffixes.append((value.lower().strip("."), tag))
-
-
 def fetch(url: str) -> str:
     req = Request(url, headers={"User-Agent": USER_AGENT})
     last_error: Exception | None = None
@@ -334,43 +314,34 @@ def json_prefix_rules(raw: str, source: str) -> list[str]:
     return rules
 
 
-def normalize_line(raw: str) -> str | None:
-    line = raw.strip().replace("\ufeff", "")
-    if not line or line.startswith(("#", "//", ";")):
+ALLOWED_RULE_TYPES = {
+    "DOMAIN",
+    "DOMAIN-SUFFIX",
+    "DOMAIN-REGEX",
+    "IP-CIDR",
+    "IP-CIDR6",
+    "IP-ASN",
+    "PROCESS-NAME",
+    "USER-AGENT",
+}
+
+
+def accept_rule(raw: str) -> Rule | None:
+    """Parse one upstream line and apply the builder's policy.
+
+    Drops keyword rules and unrecognized types, and keeps only the ``no-resolve`` modifier.
+    The shared grammar handles tokenization; this is the builder-specific filtering on top.
+    """
+    rule = parse_rule(raw)
+    if rule is None:
         return None
-    if "," not in line:
-        return None
-    parts = [part.strip() for part in line.split(",") if part.strip()]
-    if len(parts) < 2:
-        return None
-    rule_type = parts[0].upper()
-    if rule_type == "DOMAIN-KEYWORD":
+    if rule.rule_type == "DOMAIN-KEYWORD":
         # Keyword rules are too broad for this account-risk posture.
         return None
-    allowed = {
-        "DOMAIN",
-        "DOMAIN-SUFFIX",
-        "DOMAIN-REGEX",
-        "IP-CIDR",
-        "IP-CIDR6",
-        "IP-ASN",
-        "PROCESS-NAME",
-        "USER-AGENT",
-    }
-    if rule_type not in allowed:
+    if rule.rule_type not in ALLOWED_RULE_TYPES:
         return None
-    value = parts[1].strip()
-    if not value:
-        return None
-    normalized = [rule_type, value.lower() if rule_type.startswith("DOMAIN") else value]
-    if any(part.lower() == "no-resolve" for part in parts[2:]):
-        normalized.append("no-resolve")
-    return ",".join(normalized)
-
-
-def split_rule(line: str) -> tuple[str, str]:
-    parts = line.split(",", 2)
-    return parts[0], parts[1]
+    modifiers = ("no-resolve",) if any(m.lower() == "no-resolve" for m in rule.modifiers) else ()
+    return Rule(rule.rule_type, rule.value, modifiers)
 
 
 @dataclass(frozen=True)
@@ -394,7 +365,7 @@ def compile_rules(rulesets: list[RuleSet], source_contents: dict[str, str]) -> C
     observe while transforming (JSON-prefix parse errors); fetch failures belong to the
     caller. Same inputs always yield the same result, so it is testable without I/O.
     """
-    seen = SeenRules()
+    index = CoverageIndex()
     duplicate_count = 0
     covered_count = 0
     failures: list[str] = []
@@ -422,26 +393,24 @@ def compile_rules(rulesets: list[RuleSet], source_contents: dict[str, str]) -> C
         kept: list[str] = []
         local_seen: set[str] = set()
         for raw in raw_lines:
-            normalized = normalize_line(raw)
-            if normalized is None:
+            rule = accept_rule(raw)
+            if rule is None:
                 continue
-            rule_type, value = split_rule(normalized)
-            if ruleset.no_resolve and rule_type.startswith("IP-") and "no-resolve" not in normalized:
-                normalized = normalized + ",no-resolve"
-            exact_key = (rule_type, value.lower())
-            if normalized in local_seen:
+            if ruleset.no_resolve and rule.rule_type.startswith("IP-") and "no-resolve" not in rule.modifiers:
+                rule = Rule(rule.rule_type, rule.value, rule.modifiers + ("no-resolve",))
+            rendered = render_rule(rule)
+            if rendered in local_seen:
                 duplicate_count += 1
                 continue
-            if exact_key in seen.exact:
+            if index.exact_tag(rule) is not None:
                 duplicate_count += 1
                 continue
-            covered_by = seen.covered_by_suffix(rule_type, value)
-            if ruleset.drop_if_covered and covered_by is not None:
+            if ruleset.drop_if_covered and index.covered_by(rule) is not None:
                 covered_count += 1
                 continue
-            local_seen.add(normalized)
-            kept.append(normalized)
-            seen.add(rule_type, value, ruleset.tag)
+            local_seen.add(rendered)
+            kept.append(rendered)
+            index.add(rule, ruleset.tag)
 
         header = [
             f"# {ruleset.tag}",

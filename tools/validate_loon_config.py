@@ -9,6 +9,8 @@ import re
 import sys
 from pathlib import Path
 
+from rulegrammar import CoverageIndex, parse_rule
+
 
 REMOTE_RULE_ORDER = [
     "Ads-Reject",
@@ -129,25 +131,6 @@ def manifest_entries() -> list[tuple[str, str, Path]]:
     return entries
 
 
-def split_rule(line: str) -> tuple[str, str] | None:
-    if not line or line.startswith("#") or "," not in line:
-        return None
-    parts = [part.strip() for part in line.split(",")]
-    if len(parts) < 2:
-        return None
-    return parts[0].upper(), parts[1].lower() if parts[0].upper().startswith("DOMAIN") else parts[1]
-
-
-def covered_by_suffix(rule_type: str, value: str, suffixes: list[tuple[str, str]]) -> str | None:
-    if rule_type not in {"DOMAIN", "DOMAIN-SUFFIX"}:
-        return None
-    domain = value.lower().strip(".")
-    for suffix, tag in suffixes:
-        if domain == suffix or domain.endswith("." + suffix):
-            return tag
-    return None
-
-
 def validate_generated_rules(errors: list[str]) -> None:
     entries = manifest_entries()
     if [tag for tag, _policy, _path in entries] != REMOTE_RULE_ORDER:
@@ -158,8 +141,7 @@ def validate_generated_rules(errors: list[str]) -> None:
     if stale_files:
         errors.append("stale generated rule files: " + ", ".join(stale_files))
 
-    exact_seen: dict[tuple[str, str], str] = {}
-    suffixes: list[tuple[str, str]] = []
+    index = CoverageIndex()
     for tag, _policy, rel_path in entries:
         path = Path(__file__).resolve().parents[1] / rel_path
         if not path.exists():
@@ -167,23 +149,21 @@ def validate_generated_rules(errors: list[str]) -> None:
             continue
         local_seen: set[tuple[str, str]] = set()
         for raw in active_lines(path.read_text().splitlines()):
-            parsed = split_rule(raw)
-            if parsed is None:
+            rule = parse_rule(raw)
+            if rule is None:
                 errors.append(f"{rel_path}: invalid rule line: {raw}")
                 continue
-            rule_type, value = parsed
-            key = (rule_type, value)
+            key = (rule.rule_type, rule.value)
             if key in local_seen:
                 errors.append(f"{rel_path}: duplicate local rule: {raw}")
-            if key in exact_seen:
-                errors.append(f"{rel_path}: duplicate cross-file rule also in {exact_seen[key]}: {raw}")
-            covered = covered_by_suffix(rule_type, value, suffixes)
+            cross_tag = index.exact_tag(rule)
+            if cross_tag is not None:
+                errors.append(f"{rel_path}: duplicate cross-file rule also in {cross_tag}: {raw}")
+            covered = index.covered_by(rule)
             if covered is not None and tag != "ChinaASN-Direct":
                 errors.append(f"{rel_path}: rule covered by earlier {covered}: {raw}")
             local_seen.add(key)
-            exact_seen[key] = tag
-            if rule_type == "DOMAIN-SUFFIX":
-                suffixes.append((value.strip("."), tag))
+            index.add(rule, tag)
 
 
 def main() -> int:
