@@ -24,7 +24,7 @@ REMOTE_RULE_ORDER = [ruleset.tag for ruleset in build_loon_rules.RULESETS]
 REQUIRED_REMOTE_TAGS = set(REMOTE_RULE_ORDER)
 
 GENERATED_RULE_DIR = Path(__file__).resolve().parents[1] / "rules" / "loon" / "generated"
-GENERATED_RAW_PREFIX = "https://raw.githubusercontent.com/Zhengzhongjie/codex-loon-rules/main/rules/loon/generated/"
+GENERATED_RAW_PREFIX = "https://raw.githubusercontent.com/Zhengzhongjie/loon-rules-personal/main/rules/loon/generated/"
 
 BUILTIN_POLICIES = {"DIRECT", "REJECT", "REJECT-TINYGIF", "REJECT-DICT", "REJECT-DROP"}
 
