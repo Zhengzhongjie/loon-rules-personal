@@ -28,6 +28,9 @@ GENERATED_RAW_PREFIX = "https://raw.githubusercontent.com/Zhengzhongjie/codex-lo
 
 BUILTIN_POLICIES = {"DIRECT", "REJECT", "REJECT-TINYGIF", "REJECT-DICT", "REJECT-DROP"}
 
+# Host/IP-matching rule types whose value never legitimately contains whitespace.
+_NO_WHITESPACE_TYPES = {"DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-REGEX", "IP-CIDR", "IP-CIDR6", "IP-ASN"}
+
 HIGH_RISK_PLUGIN_MARKERS = {
     "BiliBili.ADBlock.plugin",
     "BiliBili.Enhanced.plugin",
@@ -115,6 +118,20 @@ def manifest_entries() -> list[tuple[str, str, Path]]:
     return entries
 
 
+def rule_value_problems(rule) -> list[str]:
+    """Semantic value checks for a parsed rule (guards against leaked inline comments).
+
+    Domain/IP values never contain whitespace; USER-AGENT/PROCESS-NAME legitimately may, so
+    the whitespace check is scoped to host/IP-matching types. IP-ASN must be a bare AS number.
+    """
+    problems: list[str] = []
+    if rule.rule_type in _NO_WHITESPACE_TYPES and any(ch.isspace() for ch in rule.value):
+        problems.append("rule value has whitespace (inline comment?)")
+    if rule.rule_type == "IP-ASN" and not rule.value.isdigit():
+        problems.append("IP-ASN value must be a bare AS number")
+    return problems
+
+
 def validate_generated_rules(errors: list[str]) -> None:
     entries = manifest_entries()
     if [tag for tag, _policy, _path in entries] != REMOTE_RULE_ORDER:
@@ -137,6 +154,7 @@ def validate_generated_rules(errors: list[str]) -> None:
             if rule is None:
                 errors.append(f"{rel_path}: invalid rule line: {raw}")
                 continue
+            errors.extend(f"{rel_path}: {msg}: {raw}" for msg in rule_value_problems(rule))
             key = (rule.rule_type, rule.value)
             if key in local_seen:
                 errors.append(f"{rel_path}: duplicate local rule: {raw}")

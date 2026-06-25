@@ -8,10 +8,14 @@ and reduces modifiers; the validator treats unparseable lines as errors.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 
 _COMMENT_PREFIXES = ("#", "//", ";")
+# Inline comments: whitespace followed by // or #. `;` is excluded because USER-AGENT
+# values legitimately contain it (e.g. "Mozilla/5.0 (iPhone; CPU ...)").
+_INLINE_COMMENT = re.compile(r"\s(?://|#).*$")
 _COVERAGE_TYPES = {"DOMAIN", "DOMAIN-SUFFIX"}
 
 
@@ -32,6 +36,7 @@ def parse_rule(line: str) -> Rule | None:
     stripped = line.strip().replace("﻿", "")
     if not stripped or stripped.startswith(_COMMENT_PREFIXES):
         return None
+    stripped = _INLINE_COMMENT.sub("", stripped).strip()
     if "," not in stripped:
         return None
     parts = [part.strip() for part in stripped.split(",") if part.strip()]

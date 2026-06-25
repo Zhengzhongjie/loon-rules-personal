@@ -35,6 +35,29 @@ def test_parse_rule_returns_none_for_non_rules():
     assert rg.parse_rule("DOMAIN,") is None  # empty value
 
 
+def test_parse_rule_strips_inline_comment_before_modifier():
+    # Upstream ASN lists ship "IP-ASN,<n> // <name>" with no modifier; the comment must
+    # not leak into the value. (The builder re-appends no-resolve for no_resolve rulesets.)
+    rule = rg.parse_rule("IP-ASN,4134 // 中国电信骨干网")
+    assert rule == rg.Rule("IP-ASN", "4134", ())
+
+
+def test_parse_rule_strips_inline_comment_after_modifier():
+    rule = rg.parse_rule("IP-ASN,4134,no-resolve // 中国电信骨干网")
+    assert rule == rg.Rule("IP-ASN", "4134", ("no-resolve",))
+
+
+def test_parse_rule_strips_inline_hash_comment():
+    rule = rg.parse_rule("DOMAIN-SUFFIX,telegra.ph # telegraph")
+    assert rule == rg.Rule("DOMAIN-SUFFIX", "telegra.ph", ())
+
+
+def test_parse_rule_preserves_semicolon_in_user_agent_value():
+    # `;` is not an inline comment marker: USER-AGENT values legitimately contain it.
+    rule = rg.parse_rule("USER-AGENT,Mozilla/5.0 (iPhone; CPU)")
+    assert rule == rg.Rule("USER-AGENT", "Mozilla/5.0 (iPhone; CPU)", ())
+
+
 def test_render_rule_emits_type_value_modifiers():
     assert rg.render_rule(rg.Rule("DOMAIN", "example.com", ())) == "DOMAIN,example.com"
     assert (

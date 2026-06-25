@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import validate_loon_config as v
+from rulegrammar import Rule
 
 
 def mk(**overrides) -> v.LoonConfig:
@@ -121,6 +122,19 @@ def test_check_remote_tag_policies_against_manifest():
     cfg = mk(remote_rules=[v.RemoteRule(None, "AI", "AI")])
     assert v.check_remote_tag_policies(cfg, {"AI": "AI"}) == []
     assert any("remote tag policy mismatch" in e for e in v.check_remote_tag_policies(cfg, {"AI": "广告分流"}))
+
+
+def test_rule_value_problems_flags_inline_comment_residue():
+    assert v.rule_value_problems(Rule("IP-ASN", "4134 // 中国电信骨干网", ("no-resolve",))) != []
+    assert any("bare AS number" in p for p in v.rule_value_problems(Rule("IP-ASN", "4134x", ())))
+    assert any("whitespace" in p for p in v.rule_value_problems(Rule("DOMAIN", "a b.com", ())))
+
+
+def test_rule_value_problems_passes_clean_rules():
+    assert v.rule_value_problems(Rule("IP-ASN", "4134", ("no-resolve",))) == []
+    assert v.rule_value_problems(Rule("DOMAIN-SUFFIX", "telegra.ph", ())) == []
+    # USER-AGENT values legitimately contain spaces — must not be flagged.
+    assert v.rule_value_problems(Rule("USER-AGENT", "Mozilla/5.0 (iPhone; CPU)", ())) == []
 
 
 def test_check_plugins_high_risk_marker():

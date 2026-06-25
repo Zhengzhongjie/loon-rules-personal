@@ -43,7 +43,4 @@ IP-CIDR6,2001:b28:f23c::/47,no-resolve
 IP-CIDR6,2001:b28:f23f::/48,no-resolve
 IP-CIDR6,2a0a:f280::/29,no-resolve
 PROCESS-NAME,org.telegram.messenger
-DOMAIN-SUFFIX,comments.app // @commentsbot
-DOMAIN-SUFFIX,telegra.ph // telegraph
-DOMAIN-SUFFIX,telesco.pe // telescope
 IP-CIDR6,2a0a:f280::/32,no-resolve
