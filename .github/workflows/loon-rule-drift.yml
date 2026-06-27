@@ -38,6 +38,8 @@ jobs:
     # Networked: fetches upstream. Keep off per-push runs; weekly + manual only.
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
