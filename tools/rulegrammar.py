@@ -62,7 +62,11 @@ class CoverageIndex:
 
     def __init__(self) -> None:
         self._exact: dict[tuple[str, str], str] = {}
-        self._suffixes: list[tuple[str, str]] = []
+        # suffix -> (insertion sequence, tag); lookup walks the domain's own label
+        # suffixes instead of scanning every recorded suffix, keeping covered_by
+        # O(labels) per rule. Earliest-inserted match still wins, as the old scan did.
+        self._suffix_map: dict[str, tuple[int, str]] = {}
+        self._next_seq = 0
 
     def exact_tag(self, rule: Rule) -> str | None:
         return self._exact.get((rule.rule_type, rule.value.lower()))
@@ -70,13 +74,18 @@ class CoverageIndex:
     def covered_by(self, rule: Rule) -> str | None:
         if rule.rule_type not in _COVERAGE_TYPES:
             return None
-        domain = rule.value.lower().strip(".")
-        for suffix, tag in self._suffixes:
-            if domain == suffix or domain.endswith("." + suffix):
-                return tag
-        return None
+        labels = rule.value.lower().strip(".").split(".")
+        best: tuple[int, str] | None = None
+        for i in range(len(labels)):
+            hit = self._suffix_map.get(".".join(labels[i:]))
+            if hit is not None and (best is None or hit[0] < best[0]):
+                best = hit
+        return best[1] if best is not None else None
 
     def add(self, rule: Rule, tag: str) -> None:
         self._exact[(rule.rule_type, rule.value.lower())] = tag
         if rule.rule_type == "DOMAIN-SUFFIX":
-            self._suffixes.append((rule.value.lower().strip("."), tag))
+            suffix = rule.value.lower().strip(".")
+            if suffix not in self._suffix_map:
+                self._suffix_map[suffix] = (self._next_seq, tag)
+                self._next_seq += 1
