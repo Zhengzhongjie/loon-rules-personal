@@ -3,7 +3,6 @@
 # Public rule list only. No proxy nodes, subscriptions, certificates, or secrets.
 # Policy: 海外社交资讯
 
-DOMAIN-SUFFIX,ads-twitter.com
 DOMAIN-SUFFIX,cms-twdigitalassets.com
 DOMAIN-SUFFIX,grok.com
 DOMAIN-SUFFIX,periscope.tv

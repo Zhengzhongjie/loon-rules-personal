@@ -51,8 +51,15 @@ RULESETS: list[RuleSet] = [
         "00-Ads-Reject.list",
         "Ads-Reject",
         "广告分流",
-        ("https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Surge-RULE-SET.list",),
-        notes=("Advertising and tracker rules. Keep before account-safety direct rules.",),
+        (
+            "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Surge-RULE-SET.list",
+            "https://raw.githubusercontent.com/fmz200/wool_scripts/main/Loon/rule/rejectAd.list",
+        ),
+        notes=(
+            "Advertising and tracker rules. Keep before account-safety direct rules.",
+            "Precision layer: AWAvenue targets in-app ad SDKs, fmz200 rejectAd curates CN app ads.",
+            "Bulk AdGuard-grade coverage lives in 27-Ads-Reject-Heavy so it can be toggled on-device.",
+        ),
     ),
     RuleSet(
         "01-LAN-Direct.list",
@@ -209,6 +216,16 @@ RULESETS: list[RuleSet] = [
         ("https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/ruleset/ASN.China.list",),
         no_resolve=True,
         drop_if_covered=False,
+    ),
+    RuleSet(
+        "27-Ads-Reject-Heavy.list",
+        "Ads-Reject-Heavy",
+        "广告分流",
+        ("https://raw.githubusercontent.com/Cats-Team/AdRules/main/adrules.list",),
+        notes=(
+            "Bulk AdGuard-grade layer: AdRules aggregates AdGuard DNS Filter, EasyList China and more (~170k rules).",
+            "Stays last so service/payment/direct rules win first; safe to disable on-device if iOS memory gets tight.",
+        ),
     ),
 ]
 

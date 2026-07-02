@@ -1,30 +1,31 @@
 # Generated Loon rules manifest
 # Do not include proxy nodes, subscriptions, certificates, or secrets.
 
-Ads-Reject,广告分流,rules/loon/generated/00-Ads-Reject.list,900
+Ads-Reject,广告分流,rules/loon/generated/00-Ads-Reject.list,2938
 LAN-Direct,DIRECT,rules/loon/generated/01-LAN-Direct.list,9
 AccountSafety-DIRECT,DIRECT,rules/loon/generated/02-AccountSafety-Direct.list,12
-Mainland-Services-Direct,DIRECT,rules/loon/generated/03-Mainland-Services-Direct.list,494
+Mainland-Services-Direct,DIRECT,rules/loon/generated/03-Mainland-Services-Direct.list,490
 Seetong-Local,Seetong,rules/loon/generated/04-Seetong.list,2
 PayPal-Stable,PayPal,rules/loon/generated/05-PayPal-Stable.list,247
 FinanceCrypto-Stable,金融加密,rules/loon/generated/06-FinanceCrypto-Stable.list,241
-Adobe,Adobe,rules/loon/generated/07-Adobe.list,185
-AI,AI,rules/loon/generated/08-AI.list,128
-Apple,Apple,rules/loon/generated/09-Apple.list,118
+Adobe,Adobe,rules/loon/generated/07-Adobe.list,181
+AI,AI,rules/loon/generated/08-AI.list,127
+Apple,Apple,rules/loon/generated/09-Apple.list,119
 RedNote,RedNote,rules/loon/generated/10-RedNote.list,4
 Weibo,Weibo,rules/loon/generated/11-Weibo.list,3
 TikTok,TikTok,rules/loon/generated/12-TikTok.list,30
 Douyin-ByteDance,抖音,rules/loon/generated/13-Douyin-ByteDance.list,371
 Bilibili,Bilibili,rules/loon/generated/14-Bilibili.list,127
 Telegram,Telegram,rules/loon/generated/15-Telegram.list,41
-Microsoft,Microsoft,rules/loon/generated/16-Microsoft.list,679
+Microsoft,Microsoft,rules/loon/generated/16-Microsoft.list,677
 Meta,Meta,rules/loon/generated/17-Meta.list,581
 YouTube,YouTube,rules/loon/generated/18-YouTube.list,189
-Google,Google,rules/loon/generated/19-Google.list,685
+Google,Google,rules/loon/generated/19-Google.list,672
 GitHub,GitHub,rules/loon/generated/20-GitHub.list,29
 Developer-Collab,开发协作,rules/loon/generated/21-Developer-Collab.list,29
-Global-Social-Info,海外社交资讯,rules/loon/generated/22-Global-Social-Info.list,77
-Streaming,境外流媒体,rules/loon/generated/23-Streaming.list,1672
-Amazon,Amazon,rules/loon/generated/24-Amazon.list,188
+Global-Social-Info,海外社交资讯,rules/loon/generated/22-Global-Social-Info.list,76
+Streaming,境外流媒体,rules/loon/generated/23-Streaming.list,1671
+Amazon,Amazon,rules/loon/generated/24-Amazon.list,187
 Talkatone,全局代理,rules/loon/generated/25-Talkatone.list,6
 ChinaASN-Direct,DIRECT,rules/loon/generated/26-ChinaASN-Direct.list,5075
+Ads-Reject-Heavy,广告分流,rules/loon/generated/27-Ads-Reject-Heavy.list,169442
