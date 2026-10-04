@@ -5,24 +5,31 @@ This config keeps two layers:
 1. Dedicated company/service rules first, so sensitive services can use their own policy group.
 2. Consolidated category rules later, so uncovered domains still land in the right broad bucket.
 
-## Recommended policy groups
+## Policy groups and two-hop defaults
 
-- `广告分流`: `REJECT`, then `DIRECT`.
-- `Seetong`: `DIRECT` first for camera latency and LAN-like behavior, then proxy choices.
-- `Adobe`: `DIRECT` first unless Adobe account or regional access requires proxy.
-- `Apple`: `DIRECT` first, then proxy choices.
-- `Claude`: use one stable supported-region group only (`美国节点`, `狮城节点`, `日本节点`, `台湾节点`, `韩国节点`, or `英国节点`). Do not offer `DIRECT`, Hong Kong, Macao, unknown-region, or multi-region chain choices.
-- `Binance`: one stable **non-US, non-UK** node only (`日本节点`, `狮城节点`, `香港节点`, `台湾节点`, `韩国节点`). `api.binance.com` answers HTTP 451 "Service unavailable from a restricted location" on US/UK egress. Do not put `DIRECT` first, and do not region-hop — exchange risk control dislikes it.
-- `AI`, `Google`, `YouTube`, `Telegram`, `TikTok`, `Microsoft`, `Meta`, `GitHub`, `金融加密`, `Amazon`, `开发协作`, `海外社交资讯`, `境外流媒体`: proxy first, then `DIRECT`.
-- `RedNote`, `抖音`, `Bilibili`, `Weibo`: `DIRECT` first, then proxy choices.
+The user explicitly requires `链式代理链路` first in service selectors and
+retains two-hop connections. This includes services previously documented as
+DIRECT-first, such as Apple, Adobe and Seetong. DIRECT and regional choices
+remain available manually. Built-in DIRECT foundations remain DIRECT rules.
+
+- `链式代理链路` contains actual `[Proxy Chain]` links only, with existing link
+  order preserved. Each link selects a regional ingress and `链式代理节点`.
+- `链式代理节点` preserves explicit terminal choices. If previously filter-only,
+  prepend the first existing static VLESS node when present so a fresh default
+  does not depend on subscription ordering. No node-quality measurement is implied.
+- `广告分流` keeps REJECT first, with DIRECT available for troubleshooting.
+- Keep the selected two-hop ingress/exit stable for Claude, payment and crypto
+  accounts. A group being first does not override an existing persisted selection.
+- Binance requires an eligible stable exit: US/UK egress previously returned
+  HTTP 451. Avoid frequent region switching for authenticated exchange traffic.
 
 ## Rule priority
 
-Use this order in `[Remote Rule]`:
+Use the authored `tools/build_loon_rules.py` catalogue order in `[Remote Rule]`:
 
-1. `Ads-Reject`
-2. `LAN-Direct`
-3. `AccountSafety-DIRECT`
+1. `LAN-Direct`
+2. `AccountSafety-DIRECT`
+3. `Ads-Reject`
 4. `Mainland-Services-Direct`
 5. `Seetong-Local`
 6. `PayPal-Stable`
@@ -31,26 +38,32 @@ Use this order in `[Remote Rule]`:
 9. `FinanceCrypto-Stable`
 10. `Adobe`
 11. `Claude`
-12. `AI`
-13. `Apple`
-14. `RedNote`
-15. `Weibo`
-16. `TikTok`
-17. `Douyin-ByteDance`
-18. `Bilibili`
-19. `Telegram`
-20. `Microsoft`
-21. `Meta`
-22. `YouTube`
-23. `Google`
-24. `GitHub`
-25. `Developer-Collab`
-26. `Global-Social-Info`
-27. `Streaming`
-28. `Amazon`
-29. `Talkatone`
-30. `ChinaASN-Direct`
-31. `FINAL,全局代理`
+12. `Gemini`
+13. `Microsoft-Copilot`
+14. `AI`
+15. `Apple`
+16. `RedNote`
+17. `Weibo`
+18. `TikTok`
+19. `Douyin-ByteDance`
+20. `Bilibili`
+21. `Telegram`
+22. `Microsoft`
+23. `Meta`
+24. `YouTube`
+25. `Google`
+26. `GitHub`
+27. `Developer-Collab`
+28. `X`
+29. `Global-Social-Info`
+30. `Streaming`
+31. `Amazon`
+32. `Talkatone`
+33. `ChinaASN-Direct`
+34. `Ads-Reject-Heavy` (disabled by default; opt-in only)
+
+Finally use `FINAL,全局代理` in `[Rule]`. Heavy is last and disabled; domain
+safety checks use this actual order, rather than assuming Heavy runs first.
 
 ## Conflict decisions
 
@@ -78,9 +91,9 @@ Use this order in `[Remote Rule]`:
 These supplements are authored in `tools/build_loon_rules.py` and included in
 all three generated dialect trees and their manifests. Private Loon configs may
 also bind these exact domain/policy pairs in `[Rule]` before `FINAL` so the
-rules apply while remote subscriptions refresh. Preserve existing policy-group
-choices and order; the supplements do not select an egress node or establish
-that a failing chart or API has recovered.
+rules apply while remote subscriptions refresh. The supplements do not select an egress node or establish that a failing
+chart or API has recovered. The separately authorized configuration optimizer
+places the chain link selector first and keeps the two-hop wiring intact.
 
 The OFR chart page declares `https://data.financialresearch.gov/hf/` as its
 data API, covered by the OFR suffix rule. Hypurrscan's page separately references
@@ -93,6 +106,6 @@ subdomains from ad filtering (for example, its existing metrics reject rule).
 ## Test command
 
 ```sh
-python3 tools/validate_loon_config.py "/Users/alessiozheng/Library/Mobile Documents/iCloud~com~ruikq~decar/Documents/Configs/20260503-loon.lcf"
+python3 tools/validate_loon_config.py "/Users/alessiozheng/Library/Mobile Documents/iCloud~com~ruikq~decar/Documents/Configs/loon rules for mac.lcf"
 python3 tools/audit_public_artifacts.py .
 ```

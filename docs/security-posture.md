@@ -86,13 +86,17 @@ drops exact duplicates plus later rules already covered by earlier
 
 High-level generated order:
 
-1. Reject and LAN rules.
-2. `AccountSafety-DIRECT` and mainland direct foundations.
+1. LAN and `AccountSafety-DIRECT` foundations.
+2. Core reject rules, followed by mainland direct foundations.
 3. Device/service rules such as `Seetong-Local`.
 4. Stable payment, finance, and crypto rules.
 5. Company/service rules.
 6. Category aggregation rules.
 7. ASN/direct catchalls.
+8. Heavy reject rules, disabled by default.
+
+The user's current service selectors start with `链式代理链路` and preserve
+two-hop connections; built-in DIRECT rule foundations keep their direct policy.
 
 The config should not mix these generated subscriptions with the original
 upstream subscriptions, because that reintroduces duplicate and shadowed rules.

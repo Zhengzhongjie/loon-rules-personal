@@ -1,0 +1,566 @@
+{
+  "observed_on": "2026-10-04",
+  "purpose": "Public upstream content digests from the validated build; no private proxy config data.",
+  "sources": [
+    {
+      "url": "https://openai.com/chatgpt-voice.json",
+      "sha256": "8f03f3c594165eeff009915c7e2beb4bdfb9d429fb1955c205e3b33ec781899a",
+      "bytes": 895,
+      "etag": "0x8DE8B740B501E8B",
+      "last_modified": "Thu, 26 Mar 2026 20:12:45 GMT"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/AI.list",
+      "sha256": "63e70895ac8c04c3b28965dc0b4ba9ceb3a1313a66b49487ed96005debc97e1e",
+      "bytes": 1456,
+      "etag": "\"cfac46c7d5ce2804228d4978b6c3509c369897f9659946f6a8b99515242b8f68\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Cats-Team/AdRules/main/adrules.list",
+      "sha256": "7f24740f1c33e247302db6704eb7f11f688bfccf7a028d7e2586823f2a7f9ba6",
+      "bytes": 6876524,
+      "etag": "\"c191712c7657bbc1a983b40078b312533cccb0f0b68aca694ad3e86ba228737f\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Surge-RULE-SET.list",
+      "sha256": "3aa8cec471f436156921bd33516bc14ea7535e796bba421aee8e37cac40a8387",
+      "bytes": 27191,
+      "etag": "\"dafe08a905a50e55b2ff74ff51e6a28c959e2a41036851290030ca3ac6c0ddd4\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/ruleset/ASN.China.list",
+      "sha256": "50f106604b9da0b0adc3f17f0d004dd129684ae95811ac29f13471332c8bcafa",
+      "bytes": 130484,
+      "etag": "\"b4f25db91ada962a1e250b1f7772c66504ddee950e42e587d17d9d663972c165\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/ruleset/ASN.Telegram.list",
+      "sha256": "cac4fa2ce33125fca4f9fa529360582a0d9d5ffba3ba6bf3d9c9497e0b194d35",
+      "bytes": 1020,
+      "etag": "\"15bca1ceea1e913fca8b76b29e9ddc650c739baa8778fc652d785378cf83a286\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/AbemaTV/AbemaTV.list",
+      "sha256": "37dea21dd977c1d61143c3d104268685cc8d1e7dd20991f729a992c73a8a7552",
+      "bytes": 943,
+      "etag": "\"04dd3deeb4901f4e0d2b86462fad080df94f7bd1fb10bcd66842bbc6c9f65376\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Adobe/Adobe.list",
+      "sha256": "e1197204ea146067ae722d9cd5efbcdaa1167d2ef40e48dd10fdd10ce70a07c1",
+      "bytes": 4216,
+      "etag": "\"61473540032b12bf5f3b8f41c02b94d01277ed994166d44d7bd550af117d8c48\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/AdobeActivation/AdobeActivation.list",
+      "sha256": "a8437015fd61d6d2480bbc33217bded475297f43f0e4906f3a1b737477bd6006",
+      "bytes": 3851,
+      "etag": "\"a56515c0bbb94c23b363e8bf0450c76512ab310f245caa646dad9f2108cf224b\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Alibaba/Alibaba.list",
+      "sha256": "62c50fa72605d1b35334b6aae22515762f64f98c4587e97aadc3512eecedc988",
+      "bytes": 2076,
+      "etag": "\"548cc054b94b8947544b668c8f30961289ceb38e70da4b939598cb54b10ad350\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Amazon/Amazon.list",
+      "sha256": "83e604479e651e17734e965425969d475732463e3d3c942f22afa159532f27d4",
+      "bytes": 6481,
+      "etag": "\"dd9059c301dc08235ebdcf9a47bece94cdb8d411956424959c8d4ce701789547\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Anthropic/Anthropic.list",
+      "sha256": "ee68bf42bf5666943067127776e40643f6f52bdd911152b1be62b3ecb187dc8e",
+      "bytes": 263,
+      "etag": "\"1f0541fd9a14572ca5060bb332f3a6257592f739e676f5402c2d056134970b4e\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Apple/Apple.list",
+      "sha256": "6397d4ab84a5f05b9cdf79ad746e0ddad4eef8951facbe2e6afb54b6f10e451d",
+      "bytes": 1468,
+      "etag": "\"afdc0e745cefa84e12e0ee959587a8e538ea53cc4a71cc421fef2e7a0b4263a7\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/AppleMusic/AppleMusic.list",
+      "sha256": "b6f8f30b4c7d037b455dbb687097d9a7278ff3b5c6057516c6379056b00f4e6e",
+      "bytes": 491,
+      "etag": "\"7fc97309dc42dd1fd33b2d723827b089e3625286b2f1a99afe9b4f1dd7b87848\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/AppleNews/AppleNews.list",
+      "sha256": "ec57625e5b938396b92034c0d71eadbd0c4a1adbff8243f05d8bb97441ad1b26",
+      "bytes": 217,
+      "etag": "\"aa18683e47e959a0c264c81bfb30db4382ef4eee5e5a136f36b50f04128c924e\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/AppleTV/AppleTV.list",
+      "sha256": "765c3689f99b10b2fa8a3910747676ac0a75b98869e1e0f9962bfe1121307f69",
+      "bytes": 439,
+      "etag": "\"531c809347ce94e68185215cb792dac26b098617fda2aa49c5f35be923a9aab2\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/BBC/BBC.list",
+      "sha256": "65d8e181e227aa4052ad68a7b1d1f46f51e87d726b921e943237266d76ef5fd5",
+      "bytes": 1078,
+      "etag": "\"00c53345b71bdbed3d3dde59b211684f361b1fcb9967729a675832401a0c494b\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Bahamut/Bahamut.list",
+      "sha256": "5c6618ac00734921dae209bb812c1b61cc88523e158b856548153d1d3d8df2fd",
+      "bytes": 387,
+      "etag": "\"bc0afb76366ed741db97dd4b0fc398361b51111cca1956e75f2549e286ced482\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Baidu/Baidu.list",
+      "sha256": "ac49361bba37ccd12f46dff78885ef07218d9dc9deb254d71d1c0431a7eb921a",
+      "bytes": 6981,
+      "etag": "\"687981f2ca82a5e966f9a36ed94b9488fe2989733ec4decd4925d89e269cf08a\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/BiliBili/BiliBili.list",
+      "sha256": "9b22a7bdf97792346bf480771841b6cd1097ec7ad034b34528c14f3798107854",
+      "bytes": 4523,
+      "etag": "\"f9032a745a7cd57bd4d8373a2b49fa1250d229b25d7ce8cef468ac4e60f1eb68\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/BiliBiliIntl/BiliBiliIntl.list",
+      "sha256": "8798f0970e5dfbc3d7f1a5f2000c58daca5e84634eacc28035d63571c17c3fdf",
+      "bytes": 187,
+      "etag": "\"58d3879350a517f4ce48f35700cf2f2e900786e8f2d60d6f0d00be7596177a50\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Binance/Binance.list",
+      "sha256": "034b1730ac0adb39a8a88685d6f6864a7070a14d722acbf8f3859806b28b92a4",
+      "bytes": 482,
+      "etag": "\"bd4736a28f8819597cf2c6b572dfebb3bf0072b69f8d9333f6cb436aa5d97980\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Bing/Bing.list",
+      "sha256": "4b9fe5e5f0cef4c4b09a2e109ca4db00f1cc67ec45aae5c50fca3bdb72b61968",
+      "bytes": 415,
+      "etag": "\"639e5a3b335319d787127b4ddf0d4ee2a991f41a1c412257469cee09549dbdf2\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Bloomberg/Bloomberg.list",
+      "sha256": "af3131c164b5579366228b29b08888ae4250a5e6c036f682f168c0673a19c490",
+      "bytes": 816,
+      "etag": "\"698dbfb2c2241deb30c35b2a3accd00de362fce7ba7a71f9c74c51b856bbc47d\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/ByteDance/ByteDance.list",
+      "sha256": "063f28dd27c03ee361440b2e406de4dcac5554c8711f3430ffbcc5712ba96e3c",
+      "bytes": 10756,
+      "etag": "\"52128d3f9a0b137b36b3b17adec45ac63a5f9c8c5fbcfb889dccacc25d39c33f\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Claude/Claude.list",
+      "sha256": "870e7e25d798e7f00338507f773b0eea4dfd15e25e9df0a27d5ae421ae1ab378",
+      "bytes": 244,
+      "etag": "\"560d7aa01da3ea96cf5b8c52e00f8dc8d246bd2193a5753d62d473dc8d619141\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Crypto/Crypto.list",
+      "sha256": "4fe49a0fd839fe32a88640ee891197bfd926faf70c2ea1c812383d02f16184e7",
+      "bytes": 5599,
+      "etag": "\"da541fa6eb2251785d5f368cc0be8abc512983d12ca84e8b5b20c947887da257\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/DAZN/DAZN.list",
+      "sha256": "7fe67b77f6517039572519c78c8847dc3a53ccd2aaa8b577bdc98a20c6bd0a04",
+      "bytes": 825,
+      "etag": "\"7de3c1b5340aff71c802b6edfc8b96d9c4612b908776fce933912b77b81e97ea\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Discord/Discord.list",
+      "sha256": "3d18c8fe716de06891ba3d6c34dba254cb65138a10f79e1a1a0628b5237ecb2c",
+      "bytes": 1076,
+      "etag": "\"b3a0679579b68ce7660a3f33ab4274ebc9d9a27740f26fed5c107a9b53cdec32\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Disney/Disney.list",
+      "sha256": "65ededc7b608e440f3d918f6e95b19ca52460c8fe368dbd9e840b4bc8669f753",
+      "bytes": 5565,
+      "etag": "\"75e82c14edc4a2d234a5a09675755ece7edc44ae7b82d5d6c84e67f739fdc19f\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Docker/Docker.list",
+      "sha256": "2a608ae68e9984677e76da00cf5d76a361e112e75fe5a5d27c65a5117aeadb31",
+      "bytes": 385,
+      "etag": "\"60ec1093992e0ec1574f67db984b3ac9b50ab40b7b0ba5ec4ddcf7afcc910e33\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/DouYin/DouYin.list",
+      "sha256": "020e742fe4a7084268af6aa52c4153bf5bfd54c4d7a17466f42cd3461609e32a",
+      "bytes": 533,
+      "etag": "\"d025b98541e7df0240d143fe9746edeb5a70ae631dace10a3b37845343923e8d\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Dropbox/Dropbox.list",
+      "sha256": "5e66a0c3798c02e8fdbdfd366c178b3273f03746e677193c35b5e4a411b6cbde",
+      "bytes": 699,
+      "etag": "\"58da20bb1dd11e9a3efb0237a438ef46df597b69547f9b023c7025bebc2db793\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Facebook/Facebook.list",
+      "sha256": "39b012e0dd7b4f824a9388a27229b05b2c1bf8fb870ced8846f853dfc5752381",
+      "bytes": 17399,
+      "etag": "\"22ea26a93559bb6cfc071c2311027a38d1526f4d4dbf188544c14f8a5f806a96\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Gemini/Gemini.list",
+      "sha256": "db8f69154426dca76792ab80b3ad6b0e2d078ebe0e52e76faec1724245a4ec49",
+      "bytes": 605,
+      "etag": "\"56eca4cfa6e1909e80dd076d7a2b352f5a2d57bd58fbda85d54c11db90cad6bc\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/GitHub/GitHub.list",
+      "sha256": "ced8ab0ecda5775d04ec8ee6a57b282181108565331a6a1d85e9a26fee25d79b",
+      "bytes": 1117,
+      "etag": "\"b9d5953b92bc4f58183cf13e4981ada6e66377e750bfb3eabbed73abc55523a6\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/GitLab/GitLab.list",
+      "sha256": "0c41418dd3d49d6313c5516b1d828a39aa13e1c08b9750698b5e4ec5d7ba5f8c",
+      "bytes": 350,
+      "etag": "\"dd15bcdc1357fa287d0c1f9a8746b291389c892c2feeeac9f8d20dbcef9159f5\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/GlobalMedia/GlobalMedia.list",
+      "sha256": "559a2ac75c1a3bbb3f8a457ef8717d6e8a5b024f5e58250f9d54f128b17f1ce8",
+      "bytes": 35624,
+      "etag": "\"55885e3c44e810837b35773d655d40397ed8ad5eece38e490a008a67b0c06885\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Google/Google.list",
+      "sha256": "8ad1014c13d43d907bf4b22095e2b74e8f5488abfc4ef5b6f4a9a4331897fd6a",
+      "bytes": 19792,
+      "etag": "\"539529f5825f5e5e6feed45a5a71738d3757618fcededac324ca10a051534e4a\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/GoogleDrive/GoogleDrive.list",
+      "sha256": "1acef7d70321e817bcbdb1282d8f5887ee2c6d3b871710d5022a6f08e90f12e6",
+      "bytes": 445,
+      "etag": "\"5f6773bfa9319fcb557471bf7f13d995434c4e4e23b745f3834f062bfefbfda3\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/GoogleVoice/GoogleVoice.list",
+      "sha256": "a3eee2e522719d448bd95bb3b55956d45166310f9780f57ff04b6e967a6f7b1c",
+      "bytes": 178,
+      "etag": "\"0a7ceebfcd3bc5895a7079757cb579801eaf57581b65887649146536c4f3351c\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/HBO/HBO.list",
+      "sha256": "f89c50e9a1f433dc1acb8a75aa2cab27d4e2fd82f4fed6ba2820ce9b923680e2",
+      "bytes": 1738,
+      "etag": "\"71cb4a22c59a48411dd05aecd0306d32458bf5137893256dcbbb9eac1c0ff839\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Hulu/Hulu.list",
+      "sha256": "8490ca12309a2fa967ce29178cd6eae19a226b44ddf0b4f3611c8f1377111a13",
+      "bytes": 1824,
+      "etag": "\"1dae619084ab15e5082b599f353c217e29989a76295ebb77a23ee60507212c13\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Instagram/Instagram.list",
+      "sha256": "65f28f9253b0dbb2a81485c788537896a0817766685e7bd91b2f90ec7aa19548",
+      "bytes": 287,
+      "etag": "\"c4b41a7c42259da40b14f22e72de9bb76d60841065639773a85be4f79b0abc82\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/LinkedIn/LinkedIn.list",
+      "sha256": "660570f6613cc81ad4c590b18550a5235b1e7636ecc3ef3f90b8edf600f30134",
+      "bytes": 509,
+      "etag": "\"b9408ed4b12a1279e92e415192ab14e67b8ebc64044a87886b7774c36e48e5d7\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Microsoft/Microsoft.list",
+      "sha256": "22df1a1017ad5d41755bf020ca8eb9afeedc7bdc2c649ed2074b255227a7ed8e",
+      "bytes": 20536,
+      "etag": "\"1b1fd9c1f31b720f05fe5b71fd6fccb67b7a7b118fab8b11878b2d6673c15c98\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/NetEase/NetEase.list",
+      "sha256": "4e4829591f7cb055bfe21c3c4ee2898c0849dc23f154eca7f5292da906611a9a",
+      "bytes": 4286,
+      "etag": "\"a0fe43e3ba834666c2724357ca8b09d261ce4309fac5b187252cff15bce24c0d\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Netflix/Netflix.list",
+      "sha256": "ecf67cdae0468902b9b72f028d22b3bbe2c5e12607c855d2c108c6f7d497113a",
+      "bytes": 40369,
+      "etag": "\"755d7f2ebaf2117038c9dbfcd6d228b861382f839c41e7738fa4055da37c8433\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Niconico/Niconico.list",
+      "sha256": "88c2662a8ebcffaf6d6a5b92ebbc1368eb13dc87e998cb4d29ba8f5a23e5f8bd",
+      "bytes": 419,
+      "etag": "\"cb547792220fa436c2da4e7287d2aacc51a409e7620c12f74c1d9485be9c35a2\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/OKX/OKX.list",
+      "sha256": "eee1945a601da063462eb0cb2784601513a180bf5ab78377904e4689573bfc65",
+      "bytes": 222,
+      "etag": "\"a0a214c59d9bf14e755936387bd107bf294fed818aacabd09fb3c70cda565549\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/OneDrive/OneDrive.list",
+      "sha256": "9352a648b6a170ec902f4683a9002634e66e776c8362334757bb5ba115f6d3b6",
+      "bytes": 666,
+      "etag": "\"5950b8f0456c6d8a32cdd3b2635ee07f8446acd153c202beeb90f68eb4f03bf0\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/OpenAI/OpenAI.list",
+      "sha256": "3a0f865b94d4981e2e44cd771410746cd6bdd22f4246c02be3f273ae7688eeb0",
+      "bytes": 1353,
+      "etag": "\"da7a9e1c695bf7baaefbfb8630fe0e024b8d320be1affa23adcbbc16e0175fe6\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/ParamountPlus/ParamountPlus.list",
+      "sha256": "cac7d967e7bcb6ccb080451e43b6de264706f749ee1195446ef07d3ccd38e2a3",
+      "bytes": 486,
+      "etag": "\"34dc778823589dce7cb570ed06f4012fa33b42729f507791284b4e8895d0b163\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/PayPal/PayPal.list",
+      "sha256": "4ffb6f94d2f1eff835c24b533c3d1d6e0c5a4cfbc32740fa9c32315ae218fd18",
+      "bytes": 7859,
+      "etag": "\"9fa4f655fc7cf78ab5cfbdf56cd8f04629c9b4d7c2734eadb86337ff64b70487\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Peacock/Peacock.list",
+      "sha256": "9a76bed21587550edaa62b4b745c996fb4b901aa9bd12c4b9de01c6a3c16f61b",
+      "bytes": 226,
+      "etag": "\"7f02045e0e1082d1b63428628a230d7e83a07b627adc3e17428a1f3d73685403\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/PrimeVideo/PrimeVideo.list",
+      "sha256": "4f957e0888cc89f61b3f04402282f50a5cf11d4bde7240d2b330bc9e1ba6ca46",
+      "bytes": 749,
+      "etag": "\"ceafbf68afe35b50386ceb25ba3270fdd16194969afb1b07d56f3a825fb91bc6\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Reddit/Reddit.list",
+      "sha256": "8437bd0bbf3214170f6601f3a9b34d45a7684c9e9f8d7554b608142be8a2e80b",
+      "bytes": 426,
+      "etag": "\"1e7c475fb02a9bfd7883504d9bb5ddedc9e62fe5b1b43ca04e65bb13e203a089\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Spotify/Spotify.list",
+      "sha256": "577afc9442a38c578e0aa8769b192d2f935e808114c60cbd5afd2294c79b74d0",
+      "bytes": 1197,
+      "etag": "\"e8f52ec3f5044df4e0e5722d12087a678a5af95c2b7b6d95a3f6a0157749e059\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Teams/Teams.list",
+      "sha256": "798202ddb4c44c7d3661fa7c304646e58d9296e2678e39a5ea575a2c79f50a3f",
+      "bytes": 301,
+      "etag": "\"bf988b17cfee490dd70dba01f80fb770ca0e21ca9da9ce4f60a1fa1460ef913e\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Telegram/Telegram.list",
+      "sha256": "f4b423def4d7e47e99f668e76594ec670b552888b9e1ad23a7adbc65e7400887",
+      "bytes": 1355,
+      "etag": "\"2c50c87f16b5e77430bffaf36d121fa56915f66793f20dc55443bbe3829f07dd\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Tencent/Tencent.list",
+      "sha256": "216c73190744faab2416848cda5549714139f44f166fa99bd5fad7ccf6e3e18f",
+      "bytes": 1048,
+      "etag": "\"9563aa175f315338b3aba4c51e244286557eb326df958348b31bbd3cc7279a44\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/TestFlight/TestFlight.list",
+      "sha256": "06b2eb437c4ab26a9111168cf1be4d7efbafa8eda22b0d9c1d9343bb43092a46",
+      "bytes": 248,
+      "etag": "\"a8791c98c712b307795908a5e022e66fdb27866bb1261ce7ea986a9d02d09477\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Threads/Threads.list",
+      "sha256": "e9b86a51952a33ee50ad3b31dc98bcb09699bbeb4d21371762b1124cb0091e86",
+      "bytes": 182,
+      "etag": "\"88474f6543456230330bf1aeca25894a5acad5592812360ccffa56d1318dda71\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/TikTok/TikTok.list",
+      "sha256": "403dccb2d51606d73db9e669e82cc1d9030c7e697756ae13d9f8f5fea53c151a",
+      "bytes": 1100,
+      "etag": "\"90b29161856d08c7c2ae4c418ff197b13a14e97d74db5636df4bf6bd749c0abf\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Twitch/Twitch.list",
+      "sha256": "8b7853e6f60df358bdf49aa64acd682c2937bc1e155aa23a3a5b2c22c198818d",
+      "bytes": 864,
+      "etag": "\"a318ed2ce3e651ec00b08eb9d318df66f4e4c4058628d41ca32010cf70ddb2d2\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Twitter/Twitter.list",
+      "sha256": "64c836f2431ca0d4728cc545bb74280ee50c886e346040012e6cdd2f3eee3f97",
+      "bytes": 1116,
+      "etag": "\"350c408e9c9f10e75e1f28751997f5200ada7905b192a317c5b04b8846ff4762\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/ViuTV/ViuTV.list",
+      "sha256": "cac2ef21df797cf1f4ece2909d19cedb357356b5bf530355612082fb60d605ce",
+      "bytes": 495,
+      "etag": "\"6a582750fc9474bf317f672547845ba393f71f60a4a2dcd24899e3ada855ec08\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/WeChat/WeChat.list",
+      "sha256": "c48cebb11ccc41a56a22560b83c64bf0efdf9c598128da3771f36fe591a0924e",
+      "bytes": 1085,
+      "etag": "\"231117464fb0f1fadf961866bda59bfbc7b1ecfc30ebaba6e73817ce7893df36\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Weibo/Weibo.list",
+      "sha256": "54f8a08d7f89498f4f5ec29737c0c82feff1c69faadbd0d4722e1cbd72156f75",
+      "bytes": 269,
+      "etag": "\"f0424fd95ebd9750390390492888562590240b009f8663b250a27a6cb6229656\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Whatsapp/Whatsapp.list",
+      "sha256": "644fd145b484079ff65f681deb17a6dbf1aff620afea56b1a3c24d29d9f9db4f",
+      "bytes": 752,
+      "etag": "\"c634b1396978fd8f0947c1b7eda4cd8258e1749651a6e84baad7844369ee021d\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Wikipedia/Wikipedia.list",
+      "sha256": "a13e83edb901e51c1bc4af4d2727cf37f1e09b8bdb0bb2c21e68a41d936c63ca",
+      "bytes": 499,
+      "etag": "\"b9d3ab066a0476fea45b92615802e437281619e97670d3b877c9f301a61be8b6\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Xbox/Xbox.list",
+      "sha256": "8112c4b70412939a028de87b4c871e40b62aa30eda197034a55b5980297af134",
+      "bytes": 1377,
+      "etag": "\"e4787d9eb00fe78042716abb7d6617cd2e70024a8638ba73bbe8eeb9a783223e\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/XiaoHongShu/XiaoHongShu.list",
+      "sha256": "9fb20e80dc0962cfdf410ffbd72d6bf2a6a0ac0d930951880f98164ff229e8ff",
+      "bytes": 272,
+      "etag": "\"ca3a7c8d2d3f28d3da3335b66540efb59c1c2b6cc72aea33879e6a2c0a172109\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/YouTube/YouTube.list",
+      "sha256": "aba3aab10f9acdaa9c3120b808acd94674fa89e31079aeb299438a4ad690158b",
+      "bytes": 5451,
+      "etag": "\"63885066bff514c1a2ff8946cba7cc3d179f7b5c11bcc80847ae0b8a42c5b524\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/YouTubeMusic/YouTubeMusic.list",
+      "sha256": "cb3ec1cb88951e9ef6da69a26662d1350c803d4f4628d0147ee95aa87e83b153",
+      "bytes": 327,
+      "etag": "\"8a54f4ad9bba97b837c93ea1f464d72e659f0b94451187a919ada0b034453cd5\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/iCloud/iCloud.list",
+      "sha256": "e34e2c63cb431ab0a1838d218aba4d8ddb102774f49727f3de44bc8261227475",
+      "bytes": 1877,
+      "etag": "\"8729a4b37edb76f5e5874f6060dfd893cec362f4af25dc2a51e0520352c9befc\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/iCloudPrivateRelay/iCloudPrivateRelay.list",
+      "sha256": "aad26ae2250e99f0fae3078c8cdfdbef18e0b2a552050a8254b9865016a5782b",
+      "bytes": 356,
+      "etag": "\"2a00b4e4b3c01a4aa9072d6498b63ca21d1e3d38c35aeb4662ad585b9222f1da\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fmz200/wool_scripts/main/Loon/rule/LAN.list",
+      "sha256": "ef10fc165dc70f189abfe85cb33eb1a5fe5de22c0ecf05cce95bfe830f538c32",
+      "bytes": 383,
+      "etag": "\"e86c1e18b1a8783bf08faefa95cb76c8e15fc309a94e3b5e15ed9ef9e49a26a3\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fmz200/wool_scripts/main/Loon/rule/Talkatone.list",
+      "sha256": "062cf8e0d7ccd015528599564b3b0a8f191816d117be2ddd8790a361cc16a1e3",
+      "bytes": 603,
+      "etag": "\"5d0dfb0d2fb6c248ab890be109cbd13e2271228c98d06cad45e5d88a0dffa4a3\"",
+      "last_modified": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fmz200/wool_scripts/main/Loon/rule/rejectAd.list",
+      "sha256": "aa2578572186d4f48a062d2f6aeda0f0eba36c646533a435c8d390a566dcbd62",
+      "bytes": 103295,
+      "etag": "\"ab870f5564fc88e278d72dc3829652b1b5a95abeeb04ef60abd3e6947653ebef\"",
+      "last_modified": null
+    }
+  ]
+}

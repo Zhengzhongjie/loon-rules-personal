@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 import validate_generated as vg
-from rulegrammar import Rule
+from rulegrammar import LOON, SHADOWROCKET, SURGE, Rule
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -83,3 +83,77 @@ def test_unknown_generated_rule_type_is_reported(tmp_path, monkeypatch):
     errors = vg.validate_generated_tree(generated_dir)
 
     assert errors, "an unknown generated rule type must not validate successfully"
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "IP-CIDR,999.0.0.0/24",
+        "IP-CIDR,192.0.2.0/33",
+        "IP-CIDR,192.0.2.0",
+        "IP-CIDR6,2001:db8::/129",
+        "IP-CIDR6,192.0.2.0/24",
+        "IP-ASN,0",
+        "IP-ASN,4294967296",
+    ],
+)
+def test_generated_tree_rejects_malformed_ip_values(tmp_path, monkeypatch, line):
+    generated_dir = _write_single_file_tree(tmp_path, monkeypatch, line + "\n")
+
+    assert vg.validate_generated_tree(generated_dir)
+
+
+@pytest.mark.parametrize("dialect", [LOON, SURGE])
+def test_canonical_generated_tree_rejects_ipv6_under_ipv4_type(tmp_path, monkeypatch, dialect):
+    root = tmp_path / dialect
+    root.mkdir()
+    generated_dir = _write_single_file_tree(root, monkeypatch, "IP-CIDR,2001:db8::/32\n")
+
+    assert vg.validate_generated_tree(generated_dir)
+
+
+def test_shadowrocket_generated_tree_accepts_folded_ipv6(tmp_path, monkeypatch):
+    root = tmp_path / SHADOWROCKET
+    root.mkdir()
+    generated_dir = _write_single_file_tree(root, monkeypatch, "IP-CIDR,2001:db8::/32\n")
+
+    assert vg.validate_generated_tree(generated_dir) == []
+
+
+def test_staged_tree_uses_explicit_dialect(tmp_path, monkeypatch):
+    generated_dir = _write_single_file_tree(tmp_path, monkeypatch, "IP-CIDR,2001:db8::/32\n")
+
+    assert vg.validate_generated_tree(generated_dir, dialect=SHADOWROCKET) == []
+    assert vg.validate_generated_tree(generated_dir, dialect=LOON)
+
+
+def test_staged_tree_checks_custom_ruleset_order(tmp_path):
+    rulesets = [vg.build_loon_rules.RuleSet("a.list", "A", "DIRECT", sources=("urlA",))]
+    (tmp_path / "MANIFEST.csv").write_text("A,DIRECT,rules/loon/generated/a.list,1\n")
+    (tmp_path / "a.list").write_text("DOMAIN,example.com\n")
+
+    assert vg.validate_generated_tree(tmp_path, rulesets=rulesets) == []
+
+    (tmp_path / "MANIFEST.csv").write_text("Other,DIRECT,rules/loon/generated/a.list,1\n")
+    assert vg.validate_generated_tree(tmp_path, rulesets=rulesets)
+
+
+def test_staged_tree_uses_custom_ruleset_coverage_exemptions(tmp_path):
+    rulesets = [
+        vg.build_loon_rules.RuleSet("a.list", "A", "DIRECT"),
+        vg.build_loon_rules.RuleSet("b.list", "B", "DIRECT", drop_if_covered=False),
+    ]
+    (tmp_path / "MANIFEST.csv").write_text(
+        "A,DIRECT,rules/loon/generated/a.list,1\nB,DIRECT,rules/loon/generated/b.list,1\n"
+    )
+    (tmp_path / "a.list").write_text("DOMAIN-SUFFIX,example.com\n")
+    (tmp_path / "b.list").write_text("DOMAIN,api.example.com\n")
+
+    assert vg.validate_generated_tree(tmp_path, rulesets=rulesets) == []
+
+
+def test_staged_tree_allows_empty_rules_only_when_requested(tmp_path, monkeypatch):
+    generated_dir = _write_single_file_tree(tmp_path, monkeypatch, "")
+
+    assert vg.validate_generated_tree(generated_dir, allow_empty=True) == []
+    assert vg.validate_generated_tree(generated_dir)

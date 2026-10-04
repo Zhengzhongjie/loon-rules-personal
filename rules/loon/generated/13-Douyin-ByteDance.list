@@ -3,8 +3,6 @@
 # Public rule list only. No proxy nodes, subscriptions, certificates, or secrets.
 # Policy: 抖音
 
-DOMAIN,lf3-static.bytednsdoc.com
-DOMAIN,v5-dy-o-abtest.zjcdn.com
 DOMAIN-SUFFIX,amemv.com
 DOMAIN-SUFFIX,douyincdn.com
 DOMAIN-SUFFIX,douyinpic.com
@@ -59,14 +57,10 @@ DOMAIN-SUFFIX,bytednsdoc.com
 DOMAIN-SUFFIX,byteeffecttos.com
 DOMAIN-SUFFIX,bytefcdn.com
 DOMAIN-SUFFIX,bytefcdnrd.com
-DOMAIN-SUFFIX,bytegecko.com
-DOMAIN-SUFFIX,bytegoofy.com
 DOMAIN-SUFFIX,bytegslb.com
-DOMAIN-SUFFIX,byteimg.com
 DOMAIN-SUFFIX,bytelb.net
 DOMAIN-SUFFIX,bytelove.cn
 DOMAIN-SUFFIX,bytemaimg.com
-DOMAIN-SUFFIX,bytescm.com
 DOMAIN-SUFFIX,bytesfield.com
 DOMAIN-SUFFIX,bytesmanager.com
 DOMAIN-SUFFIX,bytesyscdn.com
@@ -173,7 +167,6 @@ DOMAIN-SUFFIX,huoshanxiaoshipin.net
 DOMAIN-SUFFIX,huoshanzhibo.cn
 DOMAIN-SUFFIX,huoshanzhibo.com
 DOMAIN-SUFFIX,huoshanzhibo.net
-DOMAIN-SUFFIX,ibytedapm.com
 DOMAIN-SUFFIX,icphoto.cn
 DOMAIN-SUFFIX,idouyinpic.com
 DOMAIN-SUFFIX,idouyinstatic.com
@@ -350,7 +343,6 @@ DOMAIN-SUFFIX,xitu.io
 DOMAIN-SUFFIX,yhgfb-cn-static.com
 DOMAIN-SUFFIX,youdianyisi.com
 DOMAIN-SUFFIX,yueantech.com.cn
-DOMAIN-SUFFIX,zijieapi.com
 DOMAIN-SUFFIX,zijiecdn.cn
 DOMAIN-SUFFIX,zijiecdn.com
 DOMAIN-SUFFIX,zijiecdn.net
@@ -373,4 +365,11 @@ DOMAIN-SUFFIX,zjgslb.com
 DOMAIN-SUFFIX,zjurl.cn
 DOMAIN-SUFFIX,zlinkurl.cn
 DOMAIN-SUFFIX,zlinkurl.com
+DOMAIN-SUFFIX,bytegecko.com
+DOMAIN-SUFFIX,bytegoofy.com
+DOMAIN-SUFFIX,bytehwm.com
+DOMAIN-SUFFIX,byteimg.com
+DOMAIN-SUFFIX,bytescm.com
+DOMAIN-SUFFIX,ibytedapm.com
+DOMAIN-SUFFIX,zijieapi.com
 IP-CIDR,114.246.10.65/32,no-resolve

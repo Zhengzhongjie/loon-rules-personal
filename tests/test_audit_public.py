@@ -129,6 +129,53 @@ def test_staged_secret_fails(repo, capsys):
     assert "leak.conf" in capsys.readouterr().err
 
 
+@pytest.mark.parametrize("scan_all", [False, True], ids=["index", "tree"])
+def test_cli_reports_secret_locations_without_echoing_values(repo, capsys, scan_all):
+    markers = [f"synthetic-private-{part}" for part in ("node", "ca", "pass", "host", "bare", "key")]
+    text = (
+        "[Proxy]\n"
+        f"{markers[0]} = wireguard, {markers[0]}, 443\n"
+        f"{markers[4]}\n"
+        "[MITM]\n"
+        f"ca-p12 = {markers[1]}\n"
+        f"ca-passphrase = {markers[2]}\n"
+        f"hostname = {markers[3]}\n"
+        f"{markers[5]} = {markers[5]}\n"
+    )
+    (repo / "leak.conf").write_text(text)
+    if not scan_all:
+        _git(repo, "add", "leak.conf")
+
+    assert audit.main([str(repo), *(["--all"] if scan_all else [])]) == 1
+
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
+    assert "leak.conf" in output
+    assert "line 2" in output
+    assert "line 5" in output
+    assert "ca-p12" in output
+    assert "ca-passphrase" in output
+    assert "non-placeholder" in output
+    for marker in markers:
+        assert marker not in output
+
+
+def test_pattern_findings_report_line_number_without_echoing_uri():
+    marker = "synthetic-private-uri"
+    findings = audit.scan_text("leak.conf", f"# comment\nvless{SCHEME}{marker}@host:443\n")
+
+    assert len(findings) == 1
+    assert "line 2" in findings[0]
+    assert "proxy uri" in findings[0]
+    assert marker not in findings[0]
+
+
+def test_pattern_findings_keep_one_location_per_category():
+    text = f"# comment\nvless{SCHEME}one@host:443\nvless{SCHEME}two@host:443\n"
+
+    assert audit.scan_text("leak.conf", text) == ["leak.conf: line 2: contains proxy uri"]
+
+
 def test_staged_content_is_audited_not_worktree(repo):
     # The audited bytes are the index blob: cleaning the worktree copy after staging must not hide the leak.
     (repo / "leak.conf").write_text(FAKE_KEY)

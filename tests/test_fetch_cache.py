@@ -6,6 +6,8 @@ import hashlib
 import json
 from urllib.error import HTTPError, URLError
 
+import pytest
+
 import build_loon_rules as blr
 
 
@@ -117,3 +119,52 @@ def test_network_error_is_reported_as_fetch_all_failure_despite_cached_body(tmp_
     assert URL in failures[0]
     assert "URLError" in failures[0]
     assert "offline" in failures[0]
+
+
+@pytest.mark.parametrize(
+    "response",
+    [FakeResponse(200, b"<!doctype html><html>error</html>"), FakeResponse(200, b"\xff"), FakeResponse(200), FakeResponse(204)],
+    ids=["html", "invalid-utf8", "empty", "unexpected-status"],
+)
+def test_invalid_response_does_not_replace_valid_cached_body(tmp_path, monkeypatch, response):
+    blr.fetch(URL, opener=FakeOpener(FakeResponse(200, b"DOMAIN,safe.example\n", {"ETag": '"safe"'})), cache_dir=tmp_path)
+    monkeypatch.setattr(blr, "FETCH_RETRIES", 1)
+    metadata_path, body_path = cache_paths(tmp_path)
+    previous_cache = (metadata_path.read_bytes(), body_path.read_bytes())
+
+    with pytest.raises(URLError):
+        blr.fetch(URL, opener=FakeOpener(response), cache_dir=tmp_path)
+
+    assert (metadata_path.read_bytes(), body_path.read_bytes()) == previous_cache
+
+
+def test_invalid_304_cache_is_rejected(tmp_path, monkeypatch):
+    blr.fetch(URL, opener=FakeOpener(FakeResponse(200, b"DOMAIN,safe.example\n", {"ETag": '"safe"'})), cache_dir=tmp_path)
+    _metadata_path, body_path = cache_paths(tmp_path)
+    body_path.write_bytes(b"<html>corrupted cache</html>")
+    monkeypatch.setattr(blr, "FETCH_RETRIES", 1)
+
+    with pytest.raises(URLError):
+        blr.fetch(URL, opener=FakeOpener(HTTPError(URL, 304, "Not Modified", {}, None)), cache_dir=tmp_path)
+
+
+def test_invalid_utf8_cache_metadata_is_ignored_and_refetched(tmp_path):
+    metadata_path, body_path = cache_paths(tmp_path)
+    metadata_path.write_bytes(b"\xff")
+    body_path.write_bytes(b"DOMAIN,old.example\n")
+    opener = FakeOpener(FakeResponse(200, b"DOMAIN,new.example\n"))
+
+    result = blr.fetch(URL, opener=opener, cache_dir=tmp_path)
+
+    assert result == "DOMAIN,new.example\n"
+    assert opener.requests[0].get_header("If-none-match") is None
+
+
+def test_curl_fallback_rejects_invalid_utf8_as_a_fetch_error(tmp_path, monkeypatch):
+    fake_curl = tmp_path / "curl"
+    fake_curl.write_text("#!/bin/sh\nprintf '\\377'\n")
+    fake_curl.chmod(0o755)
+    monkeypatch.setattr(blr, "SYSTEM_CURL", fake_curl)
+
+    with pytest.raises(URLError, match="UTF-8"):
+        blr.fetch(URL, opener=FakeOpener(URLError("CERTIFICATE_VERIFY_FAILED")), cache_dir=tmp_path / "cache")

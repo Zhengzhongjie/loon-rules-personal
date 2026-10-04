@@ -5,7 +5,8 @@ Personal Loon routing notes, supplemental rule lists, and validation tooling.
 ## Contents
 
 - `docs/loon-routing-order.md`: recommended policy groups, remote-rule order, and conflict decisions.
-- `docs/optimization-2026-05-13.md`: sanitized change summary for the current optimization pass.
+- `docs/optimization-2026-10-04.md`: current routing, ad safety, generator and measured performance changes.
+- `docs/optimization-2026-05-13.md`: earlier optimization history.
 - `docs/security-posture.md`: public/private boundary and account-risk posture.
 - `rules/loon/generated/`: generated, deduplicated public Loon rule subscriptions.
 - `rules/shadowrocket/generated/`: the same rule lists in the Shadowrocket dialect — identical matches, with IPv6 `IP-CIDR6` folded into Shadowrocket's dual-stack `IP-CIDR`.
@@ -18,6 +19,8 @@ Personal Loon routing notes, supplemental rule lists, and validation tooling.
 - `tools/build_loon_rules.py`: compiles rules once from reviewed upstream sources plus local supplements, then renders every dialect tree.
 - `tools/build_shadowrocket_config.py`: renders the Shadowrocket config skeletons from the shared RULESETS catalogue plus a committed sanitized spec.
 - `tools/build_surge_config.py`: renders the Surge config skeletons from the shared RULESETS catalogue plus a committed sanitized spec.
+- `tools/optimize_loon_config.py`: validates and updates both private Loon configs with chain-first two-hop defaults, backups and optimistic concurrent-edit checks.
+- `tools/inspect_routing.py`: compares ordered DOMAIN/SUFFIX routing and records offline before/after benchmarks (not Loon device performance).
 - `tools/check_loon_rule_drift.py`: rebuilds every dialect's generated rules in memory and reports upstream drift.
 - `tools/validate_loon_config.py`: invariant checks for the local Loon configuration.
 - `tools/validate_shadowrocket_config.py`: dual-mode checks for the Shadowrocket config — committed skeletons (CI) or a filled private `.conf` (local).

@@ -134,6 +134,122 @@ def test_good_json_prefix_source_yields_ip_rules():
     assert result.failures == []
 
 
+@pytest.mark.parametrize(
+    "raw",
+    ["", "# only a comment\n", "<!doctype html><html>upstream error</html>\n", "<html>,error\nDOMAIN,example.com\n", "not a rule\n", "DOMAIN-KEYWORD,tracker\n"],
+    ids=["empty", "comments-only", "html", "html-with-commas", "invalid-text", "filtered-only"],
+)
+def test_unusable_text_source_is_reported_as_failure(raw):
+    rulesets = [blr.RuleSet("a.list", "A", "POLA", sources=("urlA",))]
+
+    result = blr.compile_rules(rulesets, {"urlA": raw})
+
+    assert any("urlA" in failure and "SOURCE_PARSE" in failure for failure in result.failures)
+    assert result.compiled["a.list"] == []
+
+
+def test_malformed_text_source_is_discarded_as_a_whole():
+    rulesets = [blr.RuleSet("a.list", "A", "POLA", sources=("bad", "good"))]
+    contents = {"bad": "DOMAIN,unsafe.example\nnot a rule\n", "good": "DOMAIN,safe.example\n"}
+
+    result = blr.compile_rules(rulesets, contents)
+
+    assert result.compiled["a.list"] == [blr.Rule("DOMAIN", "safe.example")]
+    assert any("bad" in failure and "line 2" in failure for failure in result.failures)
+
+
+@pytest.mark.parametrize("raw", ["IP-CIDR,999.1.2.0/24", "IP-CIDR,2001:db8::/32", "IP-CIDR6,1.2.3.0/24", "IP-ASN,0", "DOMAIN,,example.com"])
+def test_malformed_supported_source_rule_discards_the_source(raw):
+    rulesets = [blr.RuleSet("a.list", "A", "POLA", sources=("urlA",))]
+
+    result = blr.compile_rules(rulesets, {"urlA": f"DOMAIN,valid.example\n{raw}\n"})
+
+    assert any("SOURCE_PARSE" in failure and "line 2" in failure for failure in result.failures)
+    assert result.compiled["a.list"] == []
+
+
+def test_missing_required_source_is_reported_by_pure_compiler():
+    rulesets = [blr.RuleSet("a.list", "A", "POLA", sources=("missing",), additions=("DOMAIN,local.example",))]
+
+    result = blr.compile_rules(rulesets, {})
+
+    assert any("missing" in failure and "SOURCE_MISSING" in failure for failure in result.failures)
+
+
+def test_exact_exclusions_do_not_remove_a_broader_or_neighboring_rule():
+    rulesets = [blr.RuleSet("a.list", "A", "POLA", sources=("urlA",), exclusions=("DOMAIN,blocked.example", "IP-ASN,13335"))]
+    contents = {"urlA": "DOMAIN,blocked.example\nDOMAIN,neighbor.example\nDOMAIN-SUFFIX,example\nIP-ASN,13335,no-resolve\nIP-ASN,15169\n"}
+
+    result = blr.compile_rules(rulesets, contents)
+
+    assert blr.Rule("DOMAIN", "blocked.example") not in result.compiled["a.list"]
+    assert blr.Rule("IP-ASN", "13335", ("no-resolve",)) not in result.compiled["a.list"]
+    assert blr.Rule("DOMAIN-SUFFIX", "example") in result.compiled["a.list"]
+    assert blr.Rule("IP-ASN", "15169") in result.compiled["a.list"]
+    assert result.stats.excluded_dropped == 2
+    assert "reviewed_exclusions_dropped=2" in blr.stats_lines(result.stats)
+
+
+@pytest.mark.parametrize("broad_first", [False, True])
+def test_same_file_suffix_compaction_preserves_host_decisions(broad_first):
+    narrow = ["DOMAIN,api.example.com", "DOMAIN-SUFFIX,cdn.example.com", "DOMAIN,other.test", "DOMAIN-REGEX,^example\\.net$"]
+    raw_rules = ["DOMAIN-SUFFIX,example.com,no-resolve", *narrow] if broad_first else [*narrow, "DOMAIN-SUFFIX,example.com,no-resolve"]
+    rulesets = [blr.RuleSet("a.list", "A", "POLA", sources=("urlA",))]
+    original = [blr.accept_rule(raw) for raw in raw_rules]
+
+    result = blr.compile_rules(rulesets, {"urlA": "\n".join(raw_rules)})
+    compacted = result.compiled["a.list"]
+
+    def matches(rules, host):
+        return any(rule.rule_type == "DOMAIN" and host == rule.value or rule.rule_type == "DOMAIN-SUFFIX" and (host == rule.value or host.endswith("." + rule.value)) for rule in rules)
+
+    for host in ("example.com", "api.example.com", "cdn.example.com", "img.cdn.example.com", "other.test", "evil-example.com", "example.com.evil"):
+        assert matches(original, host) == matches(compacted, host)
+    assert blr.Rule("DOMAIN-SUFFIX", "example.com", ("no-resolve",)) in compacted
+    assert blr.Rule("DOMAIN", "api.example.com") not in compacted
+    assert blr.Rule("DOMAIN-SUFFIX", "cdn.example.com") not in compacted
+    assert blr.Rule("DOMAIN-REGEX", "^example\\.net$") in compacted
+    assert len(compacted) == 3
+
+
+def test_later_broader_policy_rule_never_removes_an_earlier_policy_override():
+    rulesets = [
+        blr.RuleSet("direct.list", "Direct", "DIRECT", additions=("DOMAIN,api.example.com",)),
+        blr.RuleSet("proxy.list", "Proxy", "PROXY", additions=("DOMAIN-SUFFIX,example.com",)),
+    ]
+
+    result = blr.compile_rules(rulesets, {})
+
+    assert result.compiled["direct.list"] == [blr.Rule("DOMAIN", "api.example.com")]
+    assert result.compiled["proxy.list"] == [blr.Rule("DOMAIN-SUFFIX", "example.com")]
+
+
+@pytest.mark.parametrize("host", ["safebrowsing.googleapis.com", "safebrowsing.apple", "httpdns.alicdn.com", "crl.microsoft.com", "activate.adobe.com", "oaistatsig.com"])
+def test_functional_security_and_auth_endpoints_are_removed_from_reject_sources(host):
+    rulesets = [blr.RuleSet("ads.list", "Ads", blr.REJECT_POLICY, sources=("ads",))]
+
+    result = blr.compile_rules(rulesets, {"ads": f"DOMAIN,{host}\nDOMAIN,telemetry.vendor.test\n"})
+
+    assert result.compiled["ads.list"] == [blr.Rule("DOMAIN", "telemetry.vendor.test")]
+    assert result.stats.allowlisted_dropped == 1
+
+
+@pytest.mark.parametrize(
+    "entry",
+    [{"ipv4Prefix": "2001:db8::/32"}, {"ipv6Prefix": "1.2.3.0/24"}, {"ipv4Prefix": "1.2.3.4"}],
+    ids=["v6-in-v4-field", "v4-in-v6-field", "missing-prefix-length"],
+)
+def test_json_prefix_source_rejects_mismatched_family_or_missing_prefix_length(entry):
+    import json
+
+    rulesets = [blr.RuleSet("a.list", "A", "POLA", json_prefix_sources=("jsonU",))]
+
+    result = blr.compile_rules(rulesets, {"jsonU": json.dumps({"prefixes": [entry]})})
+
+    assert any("JSON_PARSE" in failure for failure in result.failures)
+    assert result.compiled["a.list"] == []
+
+
 def test_compile_stats_counts_generated_files():
     rulesets = [blr.RuleSet("a.list", "A", "POLA", sources=("urlA",), notes=("note one",))]
     contents = {"urlA": "DOMAIN,keep.com\n"}

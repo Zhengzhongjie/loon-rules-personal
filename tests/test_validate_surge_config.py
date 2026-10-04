@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import build_surge_config as su
 import validate_surge_config as vs
+import pytest
 
 
 def _filled(device) -> str:
@@ -97,3 +98,47 @@ def test_inline_rule_with_no_resolve_modifier_is_not_mistaken_for_policy():
     )
     errors = vs.validate_config_text(text, "mac.conf")
     assert not any("no-resolve" in e for e in errors)
+
+
+def _heavy_binding():
+    heavy = next(ruleset for ruleset in su.RULESETS if ruleset.tag == "Ads-Reject-Heavy")
+    return f"RULE-SET,{su.SURGE_RAW_BASE}/{heavy.file},{heavy.policy}"
+
+
+def test_default_rule_bindings_leave_heavy_disabled():
+    text = _filled(su.DEVICES[1])
+    assert _heavy_binding() not in vs.sections(text)["Rule"]
+    assert vs.check_structure(text, "mac.conf") == []
+
+
+def test_filled_config_can_enable_heavy_in_catalogue_order():
+    text = _filled(su.DEVICES[1])
+    assert f"#{_heavy_binding()}" in text
+    enabled = text.replace(f"#{_heavy_binding()}", _heavy_binding())
+    assert vs.validate_config_text(enabled, "mac.conf") == []
+
+
+@pytest.mark.parametrize("change", ["duplicate", "wrong-policy", "reordered"])
+def test_enabled_heavy_must_keep_exact_binding_and_order(change):
+    text = _filled(su.DEVICES[1])
+    binding = _heavy_binding()
+    assert f"#{binding}" in text
+    text = text.replace(f"#{binding}", binding)
+    if change == "duplicate":
+        text = text.replace(binding, binding + "\n" + binding)
+    elif change == "wrong-policy":
+        text = text.replace(binding, binding.rsplit(",", 1)[0] + ",DIRECT")
+    else:
+        lines = text.splitlines()
+        lines.remove(binding)
+        first_ruleset = next(index for index, line in enumerate(lines) if line.startswith("RULE-SET,"))
+        lines.insert(first_ruleset, binding)
+        text = "\n".join(lines)
+    assert any("RULE-SET bindings do not match" in error for error in vs.validate_config_text(text, "mac.conf"))
+
+
+def test_only_heavy_can_be_disabled_without_binding_error():
+    text = _filled(su.DEVICES[1])
+    required = next(line for line in vs.sections(text)["Rule"] if line.startswith("RULE-SET,"))
+    text = text.replace(required, "#" + required)
+    assert any("RULE-SET bindings do not match" in error for error in vs.validate_config_text(text, "mac.conf"))

@@ -249,3 +249,5 @@ DOMAIN-SUFFIX,hypurrscan.io
 DOMAIN,api.hyperliquid.xyz
 DOMAIN,api-ui.hyperliquid.xyz
 DOMAIN,rpc.hyperliquid.xyz
+DOMAIN-SUFFIX,stripe.com
+DOMAIN-SUFFIX,stripe.network

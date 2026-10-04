@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from ipaddress import ip_network
 
 
 _COMMENT_PREFIXES = ("#", "//", ";")
@@ -17,6 +18,7 @@ _COMMENT_PREFIXES = ("#", "//", ";")
 # values legitimately contain it (e.g. "Mozilla/5.0 (iPhone; CPU ...)").
 _INLINE_COMMENT = re.compile(r"\s(?://|#).*$")
 _COVERAGE_TYPES = {"DOMAIN", "DOMAIN-SUFFIX"}
+_NO_WHITESPACE_TYPES = {"DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-REGEX", "IP-CIDR", "IP-CIDR6", "IP-ASN"}
 
 
 @dataclass(frozen=True)
@@ -39,12 +41,12 @@ def parse_rule(line: str) -> Rule | None:
     stripped = _INLINE_COMMENT.sub("", stripped).strip()
     if "," not in stripped:
         return None
-    parts = [part.strip() for part in stripped.split(",") if part.strip()]
-    if len(parts) < 2:
+    parts = [part.strip() for part in stripped.split(",")]
+    if len(parts) < 2 or not parts[0] or not parts[1]:
         return None
     rule_type = parts[0].upper()
     value = parts[1].lower() if rule_type.startswith("DOMAIN") else parts[1]
-    return Rule(rule_type, value, tuple(parts[2:]))
+    return Rule(rule_type, value, tuple(part for part in parts[2:] if part))
 
 
 def render_rule(rule: Rule) -> str:
@@ -55,6 +57,39 @@ def render_rule(rule: Rule) -> str:
 LOON = "loon"
 SHADOWROCKET = "shadowrocket"
 SURGE = "surge"
+
+
+def rule_value_problems(rule: Rule, *, dialect: str = LOON) -> list[str]:
+    """Check semantic values without filtering rule types or changing rendered text.
+
+    Canonical inputs and Loon/Surge outputs require IPv4 ``IP-CIDR`` and IPv6 ``IP-CIDR6``.
+    Shadowrocket's rendered ``IP-CIDR`` is dual-stack. CIDRs require a decimal prefix length;
+    host bits remain accepted, matching the builder's existing ``strict=False`` JSON handling.
+    ASN values must be ASCII decimal numbers in the nonzero unsigned 32-bit range.
+    USER-AGENT and PROCESS-NAME values may legitimately contain whitespace.
+    """
+    problems: list[str] = []
+    if rule.rule_type in _NO_WHITESPACE_TYPES and any(ch.isspace() for ch in rule.value):
+        problems.append("rule value has whitespace (inline comment?)")
+    if rule.rule_type == "IP-ASN":
+        if not re.fullmatch(r"[0-9]+", rule.value):
+            problems.append("IP-ASN value must be a bare AS number")
+        elif len(rule.value) > 10 or not 1 <= int(rule.value) <= 4294967295:
+            problems.append("IP-ASN value must be in the range 1..4294967295")
+    elif rule.rule_type in {"IP-CIDR", "IP-CIDR6"}:
+        if not re.fullmatch(r"[^/%\s]+/[0-9]{1,3}", rule.value):
+            problems.append("CIDR value must be an IP address with a decimal prefix length")
+        else:
+            try:
+                network = ip_network(rule.value, strict=False)
+            except ValueError:
+                problems.append("CIDR value has an invalid IP address or prefix length")
+            else:
+                if rule.rule_type == "IP-CIDR6" and network.version != 6:
+                    problems.append("IP-CIDR6 value must be IPv6")
+                elif rule.rule_type == "IP-CIDR" and network.version != 4 and dialect != SHADOWROCKET:
+                    problems.append("IP-CIDR value must be IPv4")
+    return problems
 
 
 def fold(rule: Rule, dialect: str) -> Rule:

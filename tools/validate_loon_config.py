@@ -7,12 +7,13 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+from collections import Counter
 from dataclasses import dataclass, field
 from ipaddress import ip_network
 from pathlib import Path
 
 import build_loon_rules
-from validate_generated import manifest_entries, validate_generated_tree
+from validate_generated import validate_generated_tree
 
 
 # The intended remote-rule order is the builder's RULESETS order — the single
@@ -23,6 +24,7 @@ from validate_generated import manifest_entries, validate_generated_tree
 REMOTE_RULE_ORDER = [ruleset.tag for ruleset in build_loon_rules.RULESETS]
 
 REQUIRED_REMOTE_TAGS = set(REMOTE_RULE_ORDER)
+OPTIONAL_DISABLED_REMOTE_TAGS = {"Ads-Reject-Heavy"}
 
 GENERATED_RULE_DIR = Path(__file__).resolve().parents[1] / "rules" / "loon" / "generated"
 GENERATED_RAW_PREFIX = "https://raw.githubusercontent.com/Zhengzhongjie/loon-rules-personal/main/rules/loon/generated/"
@@ -68,6 +70,7 @@ class RemoteRule:
     url: str | None
     tag: str | None
     policy: str | None
+    enabled: bool | None = True
 
 
 @dataclass(frozen=True)
@@ -79,16 +82,35 @@ class LoonConfig:
     remote_rules: list[RemoteRule]
     plugin_lines: list[str]
     proxy_lines: list[str] = field(default_factory=list)
+    mitm_lines: list[str] = field(default_factory=list)
+    proxy_group_lines: list[str] = field(default_factory=list)
+    proxy_chain_lines: list[str] = field(default_factory=list)
+    remote_filter_lines: list[str] = field(default_factory=list)
+    remote_proxy_lines: list[str] = field(default_factory=list)
 
 
-def _first(pattern: str, line: str) -> str | None:
-    match = re.search(pattern, line)
-    return match.group(1).strip() if match else None
+def _single(pattern: str, line: str) -> str | None:
+    matches = re.findall(pattern, line)
+    if len(matches) != 1:
+        return None
+    return matches[0].strip() or None
 
 
 def parse_remote_rule(line: str) -> RemoteRule:
     url = line.split(",", 1)[0].strip() if line.startswith(("http://", "https://")) else None
-    return RemoteRule(url, _first(r"(?:^|,\s*)tag=([^,]+)", line), _first(r"(?:^|,\s*)policy=([^,]+)", line))
+    enabled_values = re.findall(r"(?:^|,\s*)enabled\s*=\s*([^,]*)", line)
+    if not enabled_values:
+        enabled = True
+    elif len(enabled_values) == 1 and enabled_values[0].strip().lower() in {"true", "false"}:
+        enabled = enabled_values[0].strip().lower() == "true"
+    else:
+        enabled = None
+    return RemoteRule(
+        url,
+        _single(r"(?:^|,\s*)tag\s*=\s*([^,]*)", line),
+        _single(r"(?:^|,\s*)policy\s*=\s*([^,]*)", line),
+        enabled,
+    )
 
 
 def parse_loon_config(text: str) -> LoonConfig:
@@ -103,6 +125,11 @@ def parse_loon_config(text: str) -> LoonConfig:
         remote_rules=[parse_remote_rule(line) for line in active_lines(sections.get("Remote Rule", []))],
         plugin_lines=active_lines(sections.get("Plugin", [])),
         proxy_lines=active_lines(sections.get("Proxy", [])),
+        mitm_lines=active_lines(sections.get("Mitm", [])),
+        proxy_group_lines=active_lines(sections.get("Proxy Group", [])),
+        proxy_chain_lines=active_lines(sections.get("Proxy Chain", [])),
+        remote_filter_lines=active_lines(sections.get("Remote Filter", [])),
+        remote_proxy_lines=active_lines(sections.get("Remote Proxy", [])),
     )
 
 
@@ -141,20 +168,34 @@ def check_general(cfg: LoonConfig) -> list[str]:
     return errors
 
 
+RFC1918_NETWORKS = tuple(ip_network(cidr) for cidr in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"))
+HOME_TUNNEL_NETWORK = ip_network("198.18.0.0/15")
+
+
 def _is_device_local_ip_rule(line: str) -> bool:
     parts = [part.strip() for part in line.split(",")]
-    if len(parts) not in (3, 4) or parts[0].upper() not in {"IP-CIDR", "IP-CIDR6"}:
+    if len(parts) not in (3, 4) or parts[0].upper() != "IP-CIDR":
         return False
     if len(parts) == 4 and parts[3].lower() != "no-resolve":
         return False
+    if "/" not in parts[1]:
+        return False
     try:
-        ip_network(parts[1], strict=False)
+        network = ip_network(parts[1], strict=False)
     except ValueError:
         return False
+    if network.version != 4 or network.prefixlen != 32:
+        return False
+    private_host = any(network.subnet_of(private) for private in RFC1918_NETWORKS)
+    if parts[2] == "DIRECT":
+        return private_host
     # Generated service rules own managed policies. Inline IP rules are reserved for a device-only
-    # proxy target that cannot be published (for example, a private home-access tunnel).
+    # proxy target that cannot be published. The existing home tunnel uses the benchmarking range;
+    # only single private/tunnel hosts qualify, never public hosts or a replacement global route.
     managed_policies = set(REQUIRED_POLICY_GROUPS) | BUILTIN_POLICIES
-    return parts[2] not in managed_policies
+    return bool(parts[2]) and parts[2] not in managed_policies and (
+        private_host or network.subnet_of(HOME_TUNNEL_NETWORK)
+    )
 
 
 def check_rule_section(cfg: LoonConfig) -> list[str]:
@@ -184,6 +225,72 @@ def check_policy_groups(cfg: LoonConfig) -> list[str]:
     return [f"missing policy group {group}" for group in REQUIRED_POLICY_GROUPS if group not in cfg.policy_groups]
 
 
+def check_policy_references(cfg: LoonConfig) -> list[str]:
+    """Check the authored policy graph, treating remote filters/subscriptions as leaves."""
+    errors: list[str] = []
+    definition_lines = (
+        cfg.proxy_group_lines + cfg.proxy_chain_lines + cfg.proxy_lines
+        + cfg.remote_filter_lines + cfg.remote_proxy_lines
+    )
+    names = [line.partition("=")[0].strip() for line in definition_lines if "=" in line]
+    for name, count in sorted(Counter(names).items()):
+        if count > 1:
+            errors.append(f"duplicate policy definition: {name}")
+    allowed = set(names) | cfg.policy_groups | BUILTIN_POLICIES
+    graph: dict[str, list[str]] = {}
+    for lines, is_group in ((cfg.proxy_group_lines, True), (cfg.proxy_chain_lines, False)):
+        for line in lines:
+            name, separator, body = line.partition("=")
+            if not separator:
+                continue
+            name = name.strip()
+            fields = body.split(",")
+            if is_group:
+                fields = fields[1:]  # select/url-test/fallback type precedes candidate names
+            members: list[str] = []
+            for field in fields:
+                member = field.strip()
+                if "=" in member:
+                    break  # trailing options may contain quoted commas; they are not policy references
+                if member:
+                    members.append(member)
+            for member, count in sorted(Counter(members).items()):
+                if count > 1:
+                    errors.append(f"duplicate policy member: {name} -> {member}")
+                if member not in allowed:
+                    errors.append(f"missing policy reference: {name} -> {member}")
+            graph[name] = members
+
+    for line in cfg.rule_lines:
+        fields = [part.strip() for part in line.split(",")]
+        if len(fields) < 2:
+            continue
+        policy = fields[-2] if fields[-1].lower() == "no-resolve" else fields[-1]
+        if policy not in allowed:
+            errors.append(f"missing policy reference: [Rule] -> {policy}")
+
+    visited: set[str] = set()
+    visiting: list[str] = []
+
+    def visit(name: str) -> None:
+        if name in visiting:
+            cycle = visiting[visiting.index(name):] + [name]
+            errors.append("policy reference cycle: " + " -> ".join(cycle))
+            return
+        if name in visited:
+            return
+        visiting.append(name)
+        for member in graph[name]:
+            if member in graph:
+                visit(member)
+        visiting.pop()
+        visited.add(name)
+
+    for name in sorted(graph):
+        visit(name)
+    return errors
+
+
 def check_remote_tags(cfg: LoonConfig) -> list[str]:
     errors: list[str] = []
     tags = [rule.tag for rule in cfg.remote_rules if rule.tag]
@@ -198,6 +305,11 @@ def check_remote_tags(cfg: LoonConfig) -> list[str]:
     order_positions = [tags.index(tag) for tag in REMOTE_RULE_ORDER if tag in tags]
     if order_positions != sorted(order_positions):
         errors.append("remote rule tags are not in expected priority order")
+    for rule in cfg.remote_rules:
+        if rule.enabled is None:
+            errors.append(f"remote rule {rule.tag or '(untagged)'} has invalid enabled setting")
+        elif rule.tag in REQUIRED_REMOTE_TAGS - OPTIONAL_DISABLED_REMOTE_TAGS and rule.enabled is not True:
+            errors.append(f"remote rule {rule.tag} must be enabled")
     return errors
 
 
@@ -210,6 +322,10 @@ def check_remote_urls(cfg: LoonConfig) -> list[str]:
     for url in urls:
         if not url.startswith(GENERATED_RAW_PREFIX):
             errors.append(f"remote rule should use generated repo subscription, got: {url}")
+    expected_urls = {ruleset.tag: GENERATED_RAW_PREFIX + ruleset.file for ruleset in build_loon_rules.RULESETS}
+    for rule in cfg.remote_rules:
+        if rule.tag in expected_urls and rule.url != expected_urls[rule.tag]:
+            errors.append(f"remote tag URL mismatch: {rule.tag}: expected {expected_urls[rule.tag]}, got {rule.url}")
     return errors
 
 
@@ -222,7 +338,10 @@ def check_remote_policies(cfg: LoonConfig) -> list[str]:
     return []
 
 
-def check_remote_tag_policies(cfg: LoonConfig, manifest_policies: dict[str, str]) -> list[str]:
+def check_remote_tag_policies(cfg: LoonConfig, manifest_policies: dict[str, str] | None = None) -> list[str]:
+    # The authored catalogue is the default oracle, independent of generated artifacts.
+    if manifest_policies is None:
+        manifest_policies = {ruleset.tag: ruleset.policy for ruleset in build_loon_rules.RULESETS}
     actual_policies = {rule.tag: rule.policy for rule in cfg.remote_rules if rule.tag and rule.policy}
     policy_mismatches = sorted(
         f"{tag}: expected {policy}, got {actual_policies.get(tag)}"
@@ -246,6 +365,17 @@ def check_plugins(cfg: LoonConfig) -> list[str]:
             if marker in line and "enabled=false" not in line:
                 errors.append(f"account-risk plugin should be disabled: {marker}")
     return errors
+
+
+def check_mitm(cfg: LoonConfig) -> list[str]:
+    settings = [
+        line.partition("=")[2].strip().lower()
+        for line in cfg.mitm_lines
+        if line.partition("=")[0].strip() == "skip-server-cert-verify"
+    ]
+    if settings != ["false"]:
+        return ["[Mitm] skip-server-cert-verify must be false and defined exactly once"]
+    return []
 
 
 # WireGuard node values that carry base64 padding ('=') or '/'/'+' (keys) or a CIDR
@@ -284,7 +414,6 @@ def main() -> int:
     args = parser.parse_args()
 
     cfg = parse_loon_config(args.config.read_text())
-    manifest_policies = {tag: policy for tag, policy, _file in manifest_entries(GENERATED_RULE_DIR)}
 
     errors: list[str] = []
     errors += check_required_sections(cfg)
@@ -292,12 +421,14 @@ def main() -> int:
     errors += check_rule_section(cfg)
     errors += check_proxy_wireguard(cfg)
     errors += check_policy_groups(cfg)
+    errors += check_policy_references(cfg)
     errors += check_remote_tags(cfg)
     errors += check_remote_urls(cfg)
     errors += check_remote_policies(cfg)
-    errors += check_remote_tag_policies(cfg, manifest_policies)
+    errors += check_remote_tag_policies(cfg)
     errors += validate_generated_tree(GENERATED_RULE_DIR)
     errors += check_plugins(cfg)
+    errors += check_mitm(cfg)
 
     if errors:
         for error in errors:

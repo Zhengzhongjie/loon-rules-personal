@@ -47,12 +47,18 @@ def check_structure(text: str, name: str) -> list[str]:
     if errors:
         return errors
 
-    # The generated RULE-SET bindings must appear exactly and in order — a missing, extra, or
-    # reordered binding changes routing or injects an unvetted rule source. Inline user rules
-    # (non-RULE-SET lines) are allowed alongside them and filtered out of this comparison.
-    expected_rule_sets = [ln for ln in su.rule_section() if ln.startswith("RULE-SET,")]
+    # Mandatory bindings must appear exactly in catalogue order. Heavy is opt-in: when enabled,
+    # it must retain its exact URL, policy and catalogue position. Inline user rules are separate.
     actual = secs["Rule"]
     actual_rule_sets = [ln for ln in actual if ln.startswith("RULE-SET,")]
+    catalogue_bindings = [
+        (ruleset.tag, f"RULE-SET,{su.SURGE_RAW_BASE}/{ruleset.file},{ruleset.policy}")
+        for ruleset in su.RULESETS
+    ]
+    expected_rule_sets = [
+        binding for tag, binding in catalogue_bindings
+        if tag not in su.OPTIONAL_RULESET_TAGS or binding in actual_rule_sets
+    ]
     if actual_rule_sets != expected_rule_sets:
         errors.append(f"{name}: [Rule] RULE-SET bindings do not match the generated set (missing/extra/reordered)")
     if not actual or not actual[-1].startswith("FINAL,"):

@@ -22,9 +22,7 @@ TEST_URL = "http://cp.cloudflare.com/generate_204"
 # Region order used inside every service group's member list (from the Loon global group).
 REGIONS = ["美国节点", "香港节点", "澳门节点", "台湾节点", "日本节点", "韩国节点", "狮城节点", "英国节点", "其他节点"]
 
-# Claude rejects unsupported or inconsistent region signals. Keep it on one explicitly supported
-# region and exclude DIRECT, Hong Kong, Macao, unknown regions, and multi-region chain selectors.
-CLAUDE_REGIONS = ["美国节点", "狮城节点", "日本节点", "台湾节点", "韩国节点", "英国节点"]
+OPTIONAL_RULESET_TAGS = frozenset({"Ads-Reject-Heavy"})
 
 # Region latency groups: node members are private, so each carries a {{…}} placeholder plus the
 # non-secret url-test parameters carried over from the Loon config.
@@ -43,21 +41,18 @@ REGION_GROUPS = [
 # Chain groups (Loon [Proxy Chain]); the chained nodes and their underlying-proxy wiring are private.
 CHAIN_GROUPS = [
     ("链式代理节点", "select", ["{{CHAIN_NODES}}"]),
-    ("链式代理链路", "select", ["DIRECT", "{{CHAIN_LINK_NODES}}"]),
+    ("链式代理链路", "select", ["{{CHAIN_LINK_NODES}}"]),
 ]
 
-# Service groups that route through the chain first (proxy-leaning), then DIRECT, then the regions.
-PROXY_FIRST = [
-    "Adobe", "AI", "PayPal", "Binance", "金融加密", "Amazon", "X", "开发协作", "海外社交资讯",
-    "YouTube", "Google", "GitHub", "境外流媒体", "Microsoft", "Meta", "Telegram", "TikTok",
+# Every catalogue service defaults to the two-hop link; manual DIRECT and region choices remain.
+SERVICE_GROUPS = [
+    policy for policy in dict.fromkeys(ruleset.policy for ruleset in RULESETS)
+    if policy not in {"DIRECT", "REJECT", "广告分流", "大陆流量", "全局代理"}
 ]
-# China-friendly services that prefer DIRECT first.
-DIRECT_FIRST = ["Seetong", "TradingView", "Apple", "Bilibili", "RedNote", "抖音", "Weibo"]
 
 
-def service_group(name: str, direct_first: bool) -> str:
-    lead = ["DIRECT", "链式代理链路"] if direct_first else ["链式代理链路", "DIRECT"]
-    members = lead + REGIONS
+def service_group(name: str) -> str:
+    members = ["链式代理链路", "DIRECT"] + REGIONS
     return f"{name} = select,{','.join(members)},url={TEST_URL}"
 
 
@@ -128,12 +123,9 @@ def proxy_group_section() -> list[str]:
     for name, typ, members in CHAIN_GROUPS:
         lines.append(f"{name} = {typ},{','.join(members)}")
     lines.append("广告分流 = select,REJECT,DIRECT")
-    lines.append(f"大陆流量 = select,DIRECT,链式代理链路,REJECT,{','.join(REGIONS)},url={TEST_URL}")
-    lines.append(f"Claude = select,{','.join(CLAUDE_REGIONS)},url={TEST_URL}")
-    for name in PROXY_FIRST:
-        lines.append(service_group(name, direct_first=False))
-    for name in DIRECT_FIRST:
-        lines.append(service_group(name, direct_first=True))
+    lines.append(f"大陆流量 = select,链式代理链路,DIRECT,REJECT,{','.join(REGIONS)},url={TEST_URL}")
+    for name in SERVICE_GROUPS:
+        lines.append(service_group(name))
     for name, typ, nodes, params in REGION_GROUPS:
         parts = [nodes] if typ == "select" else [nodes, f"url={TEST_URL}"]
         if params:
@@ -143,10 +135,15 @@ def proxy_group_section() -> list[str]:
 
 
 def rule_section() -> list[str]:
-    # One RULE-SET line per generated Shadowrocket rule tree, in RULESETS priority order, then FINAL.
+    # Keep catalogue order, with the large Heavy ad list disabled until explicitly enabled.
     lines = ["[Rule]"]
     for rs in RULESETS:
-        lines.append(f"RULE-SET,{SR_RAW_BASE}/{rs.file},{rs.policy}")
+        binding = f"RULE-SET,{SR_RAW_BASE}/{rs.file},{rs.policy}"
+        if rs.tag in OPTIONAL_RULESET_TAGS:
+            lines.append("# Optional Heavy ad filtering: uncomment the next line to enable.")
+            lines.append("#" + binding)
+        else:
+            lines.append(binding)
     lines.append("FINAL,全局代理")
     return lines
 

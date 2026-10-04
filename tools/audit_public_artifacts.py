@@ -33,6 +33,9 @@ _MITM_SECTIONS = {"mitm", "https"}
 # ca-passphrase, and any future cert/key option) must be a placeholder in a public skeleton.
 # MITM hostnames are private per docs/security-posture.md — they reveal which apps are intercepted.
 _MITM_PUBLIC_KEYS = {"enable", "h2"}
+# Diagnostics may name recognized fields, never arbitrary text from a private assignment.
+# Proxy labels and unknown key names can themselves contain private material.
+_MITM_DIAGNOSTIC_FIELDS = {"hostname", "ca-p12", "ca-passphrase", "certificate", "private-key"}
 
 
 def _is_placeholder_value(value: str) -> bool:
@@ -41,10 +44,10 @@ def _is_placeholder_value(value: str) -> bool:
 
 
 def private_section_leaks(text: str) -> list[str]:
-    """Flag real (non-placeholder) values inside private config sections."""
+    """Flag private values by line/field only; never echo assignments or proxy labels."""
     problems: list[str] = []
     section: str | None = None
-    for raw in text.splitlines():
+    for line_number, raw in enumerate(text.splitlines(), 1):
         line = raw.strip()
         if line.startswith("[") and line.endswith("]"):
             section = line[1:-1].strip().lower()
@@ -54,11 +57,17 @@ def private_section_leaks(text: str) -> list[str]:
         if section in _PROXY_SECTIONS:
             value = line.split("=", 1)[1] if "=" in line else line
             if not _is_placeholder_value(value):
-                problems.append(f"non-placeholder value in [{section}] section: {line}")
+                problems.append(
+                    f"line {line_number}: non-placeholder value in [{section}] section (field: proxy definition)"
+                )
         elif section in _MITM_SECTIONS and "=" in line:
             key, value = line.split("=", 1)
-            if key.strip().lower() not in _MITM_PUBLIC_KEYS and not _is_placeholder_value(value):
-                problems.append(f"non-placeholder value in MITM section: {line}")
+            key = key.strip().lower()
+            if key not in _MITM_PUBLIC_KEYS and not _is_placeholder_value(value):
+                field = key if key in _MITM_DIAGNOSTIC_FIELDS else "unknown"
+                problems.append(
+                    f"line {line_number}: non-placeholder value in MITM section (field: {field})"
+                )
     return problems
 
 # Scan every committed file as text by default, excluding only known-binary
@@ -119,7 +128,15 @@ def secret_material_problem(rel_path: str) -> str | None:
 
 
 def scan_text(rel_path: str, text: str) -> list[str]:
-    problems = [f"{rel_path}: contains {label}" for label, pattern in SECRET_PATTERNS if pattern.search(text)]
+    problems: list[str] = []
+    # Keep one finding per category, as before. Search the full text in the regex engine
+    # rather than running every pattern in Python for every generated rule line.
+    for label, pattern in SECRET_PATTERNS:
+        match = pattern.search(text)
+        if match is not None:
+            prefix = text[:match.start()]
+            line_number = 1 + prefix.count("\n") + prefix.count("\r") - prefix.count("\r\n")
+            problems.append(f"{rel_path}: line {line_number}: contains {label}")
     problems.extend(f"{rel_path}: {problem}" for problem in private_section_leaks(text))
     return problems
 

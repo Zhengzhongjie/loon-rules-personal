@@ -1,8 +1,9 @@
 """Regression guard: functional service domains must not be shadowed by earlier
 reject rules under first-match-wins ordering.
 
-The reject rulesets (00-Ads-Reject, 27-Ads-Reject-Heavy) sit *above* the service
-rulesets in file order, so a reject rule matching a service domain preempts it.
+The core reject ruleset precedes most service rules; optional Heavy is last.
+A reject rule only preempts a service when it actually precedes that service
+in the catalogue, regardless of its numeric filename.
 For a *functional* domain (auth, API, feature flags) that silently breaks the
 service — the statsig.com class of bug that SERVICE_ALLOWLIST fixes. For a
 *telemetry* domain (RUM, analytics) the preemption is harmless and intended.
@@ -22,7 +23,7 @@ from pathlib import Path
 
 import pytest
 
-from build_loon_rules import SERVICE_ALLOWLIST
+from build_loon_rules import RULESETS, SERVICE_ALLOWLIST
 from rulegrammar import parse_rule
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -63,7 +64,7 @@ def _parent_suffixes(host: str):
         yield ".".join(labels[i:])
 
 
-def _reject_index(generated_dir: Path):
+def _reject_index(generated_dir: Path, files=REJECT_FILES):
     """Build lookup structures from a dialect's reject lists.
 
     - reject_domain / reject_suffix: exact rule values by type
@@ -74,7 +75,7 @@ def _reject_index(generated_dir: Path):
     reject_domain: set[str] = set()
     reject_suffix: set[str] = set()
     covered: set[str] = set()
-    for fname in REJECT_FILES:
+    for fname in files:
         for rule in _domain_rules(generated_dir / fname):
             (reject_domain if rule.rule_type == "DOMAIN" else reject_suffix).add(rule.value)
             covered.update(_parent_suffixes(rule.value))
@@ -83,14 +84,15 @@ def _reject_index(generated_dir: Path):
 
 def _shadowed_service_domains(generated_dir: Path) -> set[str]:
     """Service-rule values preempted by some reject rule in the same dialect tree."""
-    reject_domain, reject_suffix, covered = _reject_index(generated_dir)
-
-    def host_rejected(host: str) -> bool:
-        # host itself matched by DOMAIN,host or by a parent DOMAIN-SUFFIX
-        return host in reject_domain or any(p in reject_suffix for p in _parent_suffixes(host))
-
     shadowed: set[str] = set()
+    order = [rs.file for rs in RULESETS]
     for fname in SERVICE_FILES:
+        earlier = tuple(reject for reject in REJECT_FILES if order.index(reject) < order.index(fname))
+        reject_domain, reject_suffix, covered = _reject_index(generated_dir, earlier)
+
+        def host_rejected(host: str) -> bool:
+            return host in reject_domain or any(p in reject_suffix for p in _parent_suffixes(host))
+
         for rule in _domain_rules(generated_dir / fname):
             if rule.rule_type == "DOMAIN":
                 if host_rejected(rule.value):

@@ -30,10 +30,11 @@ def test_canonical_sections_present_and_ordered():
 def test_rule_section_derives_one_ruleset_line_each_plus_final():
     rules = _sections(su.render_config(su.DEVICES[0]))["Rule"]
     rule_set_lines = [ln for ln in rules if ln.startswith("RULE-SET,")]
-    assert len(rule_set_lines) == len(RULESETS)
+    required = [ruleset for ruleset in RULESETS if ruleset.tag != "Ads-Reject-Heavy"]
+    assert len(rule_set_lines) == len(required)
     assert rules[-1] == "FINAL,全局代理"
     # Each ruleset maps to its policy at its Surge tree URL, in RULESETS priority order.
-    for ruleset, line in zip(RULESETS, rule_set_lines):
+    for ruleset, line in zip(required, rule_set_lines):
         assert line == f"RULE-SET,{su.SURGE_RAW_BASE}/{ruleset.file},{ruleset.policy}"
 
 
@@ -46,12 +47,36 @@ def test_every_rule_policy_resolves_to_a_group_or_builtin():
         assert policy in group_names or policy in BUILTIN_POLICIES, f"dangling policy: {policy}"
 
 
-def test_claude_group_uses_supported_stable_regions_only():
+def test_all_service_groups_choose_chain_first():
     groups = _sections(su.render_config(su.DEVICES[0]))["Proxy Group"]
-    claude = next(line for line in groups if line.startswith("Claude = "))
-    members = {part.strip() for part in claude.split(",")[1:] if not part.startswith("url=")}
-    assert members == set(su.CLAUDE_REGIONS)
-    assert not {"DIRECT", "链式代理链路", "香港节点", "澳门节点", "其他节点"} & members
+    policies = {ruleset.policy for ruleset in RULESETS} - BUILTIN_POLICIES - {"广告分流"}
+    policies |= {"全局代理", "大陆流量", "Claude"}
+    for policy in policies:
+        line = next(line for line in groups if line.startswith(f"{policy} = "))
+        assert line.split(",", 2)[1] == "链式代理链路", policy
+
+
+def test_service_groups_preserve_direct_and_all_region_choices():
+    groups = _sections(su.render_config(su.DEVICES[0]))["Proxy Group"]
+    policies = {ruleset.policy for ruleset in RULESETS} - BUILTIN_POLICIES - {"广告分流"}
+    for policy in policies | {"全局代理", "大陆流量"}:
+        line = next(line for line in groups if line.startswith(f"{policy} = "))
+        members = set(line.split(",")[1:])
+        assert {"DIRECT", *su.REGIONS} <= members, policy
+
+
+def test_chain_selector_contains_only_configured_chain_link_nodes():
+    groups = _sections(su.render_config(su.DEVICES[0]))["Proxy Group"]
+    assert "链式代理链路 = select,{{CHAIN_LINK_NODES}}" in groups
+    assert "链式代理节点 = select,{{CHAIN_NODES}}" in groups
+
+
+def test_heavy_ads_binding_is_commented_opt_in():
+    text = su.render_config(su.DEVICES[0])
+    heavy = next(ruleset for ruleset in RULESETS if ruleset.tag == "Ads-Reject-Heavy")
+    binding = f"RULE-SET,{su.SURGE_RAW_BASE}/{heavy.file},{heavy.policy}"
+    assert f"#{binding}" in text.splitlines()
+    assert binding not in _sections(text)["Rule"]
 
 
 def test_device_delta_is_home_access_mitm_hostname_and_mac_general_keys():

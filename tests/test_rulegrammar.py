@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 import rulegrammar as rg
 
 
@@ -33,6 +35,11 @@ def test_parse_rule_returns_none_for_non_rules():
     assert rg.parse_rule("; comment") is None
     assert rg.parse_rule("FINAL") is None  # no comma
     assert rg.parse_rule("DOMAIN,") is None  # empty value
+
+
+@pytest.mark.parametrize("line", ["DOMAIN,,example.com", ",DOMAIN,example.com"])
+def test_parse_rule_does_not_shift_empty_required_fields(line):
+    assert rg.parse_rule(line) is None
 
 
 def test_parse_rule_strips_inline_comment_before_modifier():
@@ -119,3 +126,50 @@ def test_fold_surge_is_identity():
         rg.Rule("DOMAIN-SUFFIX", "example.com", ()),
     ):
         assert rg.fold(rule, rg.SURGE) == rule
+
+
+@pytest.mark.parametrize(
+    "rule",
+    [
+        rg.Rule("IP-CIDR", "192.0.2.1/24"),
+        rg.Rule("IP-CIDR", "0.0.0.0/0"),
+        rg.Rule("IP-CIDR6", "2001:DB8::1/32"),
+        rg.Rule("IP-CIDR6", "::/0"),
+        rg.Rule("IP-ASN", "4134"),
+        rg.Rule("IP-ASN", "4294967295"),
+        rg.Rule("USER-AGENT", "Mozilla/5.0 (iPhone; CPU)"),
+        rg.Rule("PROCESS-NAME", "An App"),
+    ],
+)
+def test_shared_value_checks_preserve_supported_values(rule):
+    assert rg.rule_value_problems(rule) == []
+
+
+@pytest.mark.parametrize(
+    "rule",
+    [
+        rg.Rule("IP-CIDR", "999.0.0.0/24"),
+        rg.Rule("IP-CIDR", "example.com/24"),
+        rg.Rule("IP-CIDR", "192.0.2.0/33"),
+        rg.Rule("IP-CIDR", "192.0.2.0"),
+        rg.Rule("IP-CIDR", "192.0.2.0/255.255.255.0"),
+        rg.Rule("IP-CIDR", "192.0.2.0/-1"),
+        rg.Rule("IP-CIDR", "192.0.2.0/２４"),
+        rg.Rule("IP-CIDR6", "2001:db8::/129"),
+        rg.Rule("IP-CIDR6", "2001:db8:::1/64"),
+        rg.Rule("IP-CIDR6", "fe80::%eth0/64"),
+        rg.Rule("IP-CIDR", "2001:db8::/32"),
+        rg.Rule("IP-CIDR6", "192.0.2.0/24"),
+        rg.Rule("IP-ASN", "AS4134"),
+        rg.Rule("IP-ASN", "４１３４"),
+        rg.Rule("IP-ASN", "0"),
+        rg.Rule("IP-ASN", "4294967296"),
+    ],
+)
+def test_shared_value_checks_reject_malformed_ip_and_asn_values(rule):
+    assert rg.rule_value_problems(rule)
+
+
+def test_shadowrocket_shared_value_checks_accept_dual_stack_ip_cidr():
+    assert rg.rule_value_problems(rg.Rule("IP-CIDR", "2001:db8::/32"), dialect=rg.SHADOWROCKET) == []
+    assert rg.rule_value_problems(rg.Rule("IP-CIDR6", "192.0.2.0/24"), dialect=rg.SHADOWROCKET)

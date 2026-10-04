@@ -267,7 +267,6 @@ DOMAIN-SUFFIX,weixinsxy.com
 DOMAIN-SUFFIX,wx.gtimg.com
 USER-AGENT,MicroMessenger*
 USER-AGENT,WeChat*
-IP-ASN,132203,no-resolve
 USER-AGENT,MOO%E9%9F%B3%E4%B9%90*
 USER-AGENT,QQ%E9%9F%B3%E4%B9%90
 USER-AGENT,TencentMidasConnect*
@@ -496,3 +495,4 @@ IP-CIDR,59.111.21.14/31,no-resolve
 IP-CIDR,59.111.238.29/32,no-resolve
 DOMAIN-SUFFIX,gaokao.cn
 DOMAIN-SUFFIX,zbrowser.cn
+DOMAIN-SUFFIX,iqiyi.com

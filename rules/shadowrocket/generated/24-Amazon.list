@@ -6,6 +6,7 @@
 DOMAIN-SUFFIX,a2z.com
 DOMAIN-SUFFIX,aboutamazon.cn
 DOMAIN-SUFFIX,aboutamazon.co.uk
+DOMAIN-SUFFIX,aboutamazon.com
 DOMAIN-SUFFIX,aboutamazon.com.au
 DOMAIN-SUFFIX,aboutamazon.de
 DOMAIN-SUFFIX,aboutamazon.es
@@ -42,6 +43,7 @@ DOMAIN-SUFFIX,amazon.es
 DOMAIN-SUFFIX,amazon.fr
 DOMAIN-SUFFIX,amazon.in
 DOMAIN-SUFFIX,amazon.it
+DOMAIN-SUFFIX,amazon.jobs
 DOMAIN-SUFFIX,amazon.jp
 DOMAIN-SUFFIX,amazon.nl
 DOMAIN-SUFFIX,amazon.red
@@ -82,7 +84,10 @@ DOMAIN-SUFFIX,amazonprimevideo.com.cn
 DOMAIN-SUFFIX,amazonprimevideos.com
 DOMAIN-SUFFIX,amazonsdi.com
 DOMAIN-SUFFIX,amazonstudiosguilds.com
+DOMAIN-SUFFIX,amazontools.com
+DOMAIN-SUFFIX,amazontours.com
 DOMAIN-SUFFIX,amazontrust.com
+DOMAIN-SUFFIX,amazonuniversity.jobs
 DOMAIN-SUFFIX,amazonvideo.cc
 DOMAIN-SUFFIX,amazonvideodirect.com
 DOMAIN-SUFFIX,amazonworkdocs.cn
@@ -158,6 +163,7 @@ DOMAIN-SUFFIX,primevideo.cc
 DOMAIN-SUFFIX,primevideo.info
 DOMAIN-SUFFIX,primevideo.org
 DOMAIN-SUFFIX,primevideo.tv
+DOMAIN-SUFFIX,seattlespheres.com
 DOMAIN-SUFFIX,siege-amazon.com
 DOMAIN-SUFFIX,ssl-images-amazon.com
 DOMAIN-SUFFIX,thinkboxsoftware.com

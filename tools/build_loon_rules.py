@@ -61,6 +61,7 @@ class RuleSet:
     notes: tuple[str, ...] = ()
     no_resolve: bool = False
     drop_if_covered: bool = True
+    exclusions: tuple[str, ...] = ()
 
 
 RULESETS: list[RuleSet] = [
@@ -73,10 +74,11 @@ RULESETS: list[RuleSet] = [
             "https://raw.githubusercontent.com/fmz200/wool_scripts/main/Loon/rule/rejectAd.list",
         ),
         notes=(
-            "Advertising and tracker rules. Keep before account-safety direct rules.",
+            "Advertising and tracker rules. Keep after LAN and account-safety direct rules.",
             "Precision layer: AWAvenue targets in-app ad SDKs, fmz200 rejectAd curates CN app ads.",
             "Bulk AdGuard-grade coverage lives in 27-Ads-Reject-Heavy so it can be toggled on-device.",
         ),
+        exclusions=("IP-CIDR,203.107.1.1/24", "IP-CIDR,203.107.1.0/24", "DOMAIN-SUFFIX,pagespeed-mod"),
     ),
     RuleSet(
         "01-LAN-Direct.list",
@@ -115,8 +117,9 @@ RULESETS: list[RuleSet] = [
         "Mainland-Services-Direct",
         "DIRECT",
         tuple(blackmatrix(name) for name in ("Baidu", "WeChat", "Tencent", "Alibaba", "NetEase")),
-        additions=("DOMAIN-SUFFIX,gaokao.cn", "DOMAIN-SUFFIX,zbrowser.cn"),
+        additions=("DOMAIN-SUFFIX,gaokao.cn", "DOMAIN-SUFFIX,zbrowser.cn", "DOMAIN-SUFFIX,iqiyi.com"),
         notes=("Keep the Gaokao service direct when migrating private inline rules.",),
+        exclusions=("IP-ASN,132203",),
     ),
     RuleSet(
         "04-Seetong.list",
@@ -169,7 +172,7 @@ RULESETS: list[RuleSet] = [
         "06-FinanceCrypto-Stable.list",
         "FinanceCrypto-Stable",
         "金融加密",
-        tuple(blackmatrix(name) for name in ("Stripe", "OKX", "Crypto", "Bloomberg")),
+        tuple(blackmatrix(name) for name in ("OKX", "Crypto", "Bloomberg")),
         additions=(
             "DOMAIN-SUFFIX,stripecdn.com",
             "DOMAIN-SUFFIX,binance.us",
@@ -205,6 +208,8 @@ RULESETS: list[RuleSet] = [
             "DOMAIN,api.hyperliquid.xyz",
             "DOMAIN,api-ui.hyperliquid.xyz",
             "DOMAIN,rpc.hyperliquid.xyz",
+            "DOMAIN-SUFFIX,stripe.com",
+            "DOMAIN-SUFFIX,stripe.network",
         ),
         notes=("Use a manually selected stable policy. Avoid frequent automatic region switching.",),
     ),
@@ -221,10 +226,34 @@ RULESETS: list[RuleSet] = [
         ),
     ),
     RuleSet(
+        "08-Gemini.list", "Gemini", "Google", (blackmatrix("Gemini"),),
+        additions=(
+            "DOMAIN-SUFFIX,gemini.google.com", "DOMAIN,aistudio.google.com",
+            "DOMAIN,ai.google.dev", "DOMAIN,generativelanguage.googleapis.com",
+            "DOMAIN-SUFFIX,notebooklm.google", "DOMAIN-SUFFIX,notebooklm.google.com",
+            "DOMAIN-SUFFIX,makersuite.google.com",
+        ),
+        exclusions=("DOMAIN-SUFFIX,apis.google.com",),
+        notes=("Gemini, AI Studio and NotebookLM share the Google login policy.",),
+    ),
+    RuleSet(
+        "08-Microsoft-Copilot.list", "Microsoft-Copilot", "Microsoft",
+        additions=(
+            "DOMAIN-SUFFIX,copilot.microsoft.com", "DOMAIN-SUFFIX,copilot.cloud.microsoft",
+            "DOMAIN,sydney.bing.com", "DOMAIN-SUFFIX,edgeservices.bing.com",
+            "DOMAIN,gateway.bingviz.microsoft.net", "DOMAIN,gateway.bingviz.microsoftapp.net",
+            "DOMAIN,services.bingapis.com",
+        ),
+        notes=(
+            "Microsoft Copilot shares the Microsoft identity policy; GitHub Copilot remains with GitHub.",
+            "Reviewed Microsoft endpoints only; upstream Copilot incorrectly includes broad OpenAI/shared infrastructure.",
+        ),
+    ),
+    RuleSet(
         "08-AI.list",
         "AI",
         "AI",
-        tuple(blackmatrix(name) for name in ("OpenAI", "Gemini", "Copilot"))
+        (blackmatrix("OpenAI"),)
         + ("https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/AI.list",),
         json_prefix_sources=("https://openai.com/chatgpt-voice.json",),
         additions=(
@@ -235,6 +264,7 @@ RULESETS: list[RuleSet] = [
             "DOMAIN-SUFFIX,ct.sendgrid.net",
             "DOMAIN-SUFFIX,statsig.com",
             "DOMAIN-SUFFIX,statsigapi.net",
+            "DOMAIN-SUFFIX,oaistatsig.com",
             "DOMAIN-SUFFIX,featuregates.org",
             "DOMAIN-SUFFIX,launchdarkly.com",
             "DOMAIN,cdn.openaimerge.com",
@@ -255,12 +285,26 @@ RULESETS: list[RuleSet] = [
             "ChatGPT/OpenAI supplemental domains mirror the official OpenAI network recommendations.",
             "ChatGPT Voice IP prefixes are generated from https://openai.com/chatgpt-voice.json.",
         ),
+        exclusions=(
+            "DOMAIN-SUFFIX,auth0.com",
+            "DOMAIN-SUFFIX,sentry.io",
+            "DOMAIN-SUFFIX,stripe.com",
+            "IP-ASN,20473",
+            "IP-ASN,14061",
+            "DOMAIN-SUFFIX,apis.google.com",
+            "DOMAIN-SUFFIX,algolia.net",
+            "DOMAIN-SUFFIX,identrust.com",
+            "DOMAIN-SUFFIX,intercom.io",
+            "DOMAIN,api.githubcopilot.com",
+            "DOMAIN,copilot-proxy.githubusercontent.com",
+        ),
     ),
     RuleSet(
         "09-Apple.list",
         "Apple",
         "Apple",
         tuple(blackmatrix(name) for name in ("Apple", "iCloud", "iCloudPrivateRelay", "TestFlight", "AppleNews", "AppleTV", "AppleMusic")),
+        additions=("DOMAIN-SUFFIX,safebrowsing.apple", "DOMAIN,safebrowsing.g.applimg.com"),
     ),
     RuleSet("10-RedNote.list", "RedNote", "RedNote", (blackmatrix("XiaoHongShu"),)),
     RuleSet("11-Weibo.list", "Weibo", "Weibo", (blackmatrix("Weibo"),)),
@@ -279,17 +323,20 @@ RULESETS: list[RuleSet] = [
         "Microsoft",
         "Microsoft",
         tuple(blackmatrix(name) for name in ("Microsoft", "OneDrive", "Teams", "Bing", "Xbox", "LinkedIn")),
+        exclusions=("DOMAIN-SUFFIX,akadns.net", "DOMAIN-SUFFIX,edgesuite.net"),
     ),
     RuleSet("17-Meta.list", "Meta", "Meta", tuple(blackmatrix(name) for name in ("Facebook", "Instagram", "Whatsapp", "Threads"))),
     RuleSet("18-YouTube.list", "YouTube", "YouTube", tuple(blackmatrix(name) for name in ("YouTube", "YouTubeMusic"))),
     RuleSet("19-Google.list", "Google", "Google", tuple(blackmatrix(name) for name in ("GoogleVoice", "GoogleDrive", "Google"))),
-    RuleSet("20-GitHub.list", "GitHub", "GitHub", (blackmatrix("GitHub"),)),
+    RuleSet("20-GitHub.list", "GitHub", "GitHub", (blackmatrix("GitHub"),),
+            additions=("DOMAIN,api.githubcopilot.com", "DOMAIN,copilot-proxy.githubusercontent.com")),
     RuleSet("21-Developer-Collab.list", "Developer-Collab", "开发协作", tuple(blackmatrix(name) for name in ("GitLab", "Docker", "Dropbox"))),
+    RuleSet("22-X.list", "X", "X", (blackmatrix("Twitter"),)),
     RuleSet(
         "22-Global-Social-Info.list",
         "Global-Social-Info",
         "海外社交资讯",
-        tuple(blackmatrix(name) for name in ("Twitter", "Discord", "Reddit", "Wikipedia")),
+        tuple(blackmatrix(name) for name in ("Discord", "Reddit", "Wikipedia")),
         additions=("DOMAIN-SUFFIX,financialresearch.gov",),
     ),
     RuleSet(
@@ -297,7 +344,15 @@ RULESETS: list[RuleSet] = [
         "Streaming",
         "境外流媒体",
         tuple(blackmatrix(name) for name in ("Netflix", "Disney", "HBO", "Hulu", "PrimeVideo", "ParamountPlus", "Peacock", "DAZN", "Twitch", "Spotify", "BBC", "Bahamut", "ViuTV", "AbemaTV", "Niconico"))
-        + ("https://whatshub.top/rule/ProxyMedia.list",),
+        + (blackmatrix("GlobalMedia"),),
+        exclusions=(
+            "DOMAIN,www.amazon.com", "DOMAIN-SUFFIX,us-west-2.amazonaws.com",
+            "DOMAIN-SUFFIX,sentry.io", "DOMAIN-SUFFIX,intercom.io",
+            "DOMAIN-SUFFIX,execute-api.us-east-1.amazonaws.com",
+            "DOMAIN-SUFFIX,execute-api.ap-southeast-1.amazonaws.com",
+            "DOMAIN-SUFFIX,cognito-identity.us-east-1.amazonaws.com",
+            "DOMAIN-SUFFIX,mobileanalytics.us-east-1.amazonaws.com",
+        ),
     ),
     RuleSet("24-Amazon.list", "Amazon", "Amazon", (blackmatrix("Amazon"),)),
     RuleSet("25-Talkatone.list", "Talkatone", "全局代理", ("https://raw.githubusercontent.com/fmz200/wool_scripts/main/Loon/rule/Talkatone.list",)),
@@ -318,8 +373,12 @@ RULESETS: list[RuleSet] = [
             "Bulk AdGuard-grade layer: AdRules aggregates AdGuard DNS Filter, EasyList China and more (~170k rules).",
             "Stays last so service/payment/direct rules win first; safe to disable on-device if iOS memory gets tight.",
         ),
+        exclusions=("IP-CIDR,203.107.1.1/24", "IP-CIDR,203.107.1.0/24", "DOMAIN-SUFFIX,pagespeed-mod"),
     ),
 ]
+
+# Local/private destinations and account foundations outrank the reject layer.
+RULESETS[:3] = [RULESETS[1], RULESETS[2], RULESETS[0]]
 
 
 def _fetch_cache_paths(url: str, cache_dir: Path) -> tuple[Path, Path]:
@@ -332,7 +391,7 @@ def _load_fetch_cache(url: str, cache_dir: Path) -> tuple[dict[str, str | None],
     try:
         metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
         body = body_path.read_bytes()
-    except (OSError, json.JSONDecodeError):
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
         return {}, None
     if not isinstance(metadata, dict):
         return {}, None
@@ -370,6 +429,20 @@ def _response_header(response: object, name: str) -> str | None:
     return value if isinstance(value, str) else None
 
 
+def _response_text(body: bytes) -> str:
+    """Reject transport-success error pages and damaged text before caching or using it."""
+    try:
+        text = body.decode("utf-8-sig")
+    except UnicodeDecodeError as exc:
+        raise URLError(f"upstream response is not valid UTF-8: {exc}") from exc
+    stripped = text.lstrip()
+    if not stripped:
+        raise URLError("upstream response is empty")
+    if stripped.startswith("<"):
+        raise URLError("upstream response is HTML/XML rather than rule data")
+    return text
+
+
 def fetch(url: str, *, opener=None, cache_dir: Path | None = None) -> str:
     cache_dir = UPSTREAM_CACHE_DIR if cache_dir is None else cache_dir
     opener = urlopen if opener is None else opener
@@ -388,25 +461,28 @@ def fetch(url: str, *, opener=None, cache_dir: Path | None = None) -> str:
                 if status == 304:
                     if cached_body is None:
                         raise URLError("received 304 without a cached response body")
-                    return cached_body.decode("utf-8", errors="replace")
+                    return _response_text(cached_body)
+                if status != 200:
+                    raise URLError(f"unexpected upstream HTTP status {status}; expected 200 or 304")
                 body = response.read()
-                if status == 200:
-                    _write_fetch_cache(
-                        url,
-                        cache_dir,
-                        body,
-                        _response_header(response, "ETag"),
-                        _response_header(response, "Last-Modified"),
-                    )
-                return body.decode("utf-8", errors="replace")
+                text = _response_text(body)
+                _write_fetch_cache(
+                    url,
+                    cache_dir,
+                    body,
+                    _response_header(response, "ETag"),
+                    _response_header(response, "Last-Modified"),
+                )
+                return text
         except FETCH_ERRORS as exc:
             if isinstance(exc, HTTPError) and exc.code == 304 and cached_body is not None:
-                return cached_body.decode("utf-8", errors="replace")
+                return _response_text(cached_body)
             last_error = exc
             if SYSTEM_CURL.exists() and "CERTIFICATE_VERIFY_FAILED" in str(exc):
-                body = fetch_with_system_curl(url)
-                _write_fetch_cache(url, cache_dir, body.encode("utf-8"), None, None)
-                return body
+                body = fetch_with_system_curl(url).encode("utf-8")
+                text = _response_text(body)
+                _write_fetch_cache(url, cache_dir, body, None, None)
+                return text
             if attempt == FETCH_RETRIES:
                 break
             time.sleep(FETCH_RETRY_DELAY_SECONDS * attempt)
@@ -440,8 +516,11 @@ def fetch_with_system_curl(url: str) -> str:
             check=False,
             capture_output=True,
             text=True,
+            encoding="utf-8",
             timeout=FETCH_TIMEOUT_SECONDS + 3,
         )
+    except UnicodeDecodeError as exc:
+        raise URLError(f"system curl response is not valid UTF-8: {exc}") from exc
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise URLError(f"system curl fallback failed: {exc}") from exc
     if result.returncode != 0:
@@ -470,6 +549,8 @@ def fetch_all() -> tuple[dict[str, str], list[str]]:
 
 
 def json_prefix_rules(raw: str, source: str) -> list[str]:
+    from rulegrammar import rule_value_problems
+
     try:
         data = json.loads(raw)
     except json.JSONDecodeError as exc:
@@ -492,7 +573,9 @@ def json_prefix_rules(raw: str, source: str) -> list[str]:
                 continue
             if not isinstance(prefix, str) or not prefix:
                 raise ValueError(f"prefix entry {index} has invalid {key}")
-            ip_network(prefix, strict=False)
+            problems = rule_value_problems(Rule(rule_type, prefix))
+            if problems:
+                raise ValueError(f"prefix entry {index} has invalid {key}: {'; '.join(problems)}")
             rules.append(f"{rule_type},{prefix},no-resolve")
 
     if not rules:
@@ -521,13 +604,43 @@ def accept_rule(raw: str) -> Rule | None:
     rule = parse_rule(raw)
     if rule is None:
         return None
+    return _accept_parsed_rule(rule)
+
+
+def _accept_parsed_rule(rule: Rule) -> Rule | None:
+    from rulegrammar import rule_value_problems
+
     if rule.rule_type == "DOMAIN-KEYWORD":
         # Keyword rules are too broad for this account-risk posture.
         return None
     if rule.rule_type not in ALLOWED_RULE_TYPES:
         return None
+    problems = rule_value_problems(rule)
+    if problems:
+        raise ValueError("; ".join(problems))
     modifiers = ("no-resolve",) if any(m.lower() == "no-resolve" for m in rule.modifiers) else ()
     return Rule(rule.rule_type, rule.value, modifiers)
+
+
+def _text_source_rules(raw: str, *, require_rules: bool = True) -> list[Rule]:
+    """Validate a complete source before admitting any of its rows into the compiler."""
+    rules: list[Rule] = []
+    for line_number, line in enumerate(raw.splitlines(), 1):
+        stripped = line.strip().lstrip("\ufeff")
+        if not stripped or stripped.startswith(("#", "//", ";")):
+            continue
+        parsed = parse_rule(line)
+        if stripped.startswith("<") or parsed is None:
+            raise ValueError(f"line {line_number}: invalid rule syntax")
+        try:
+            rule = _accept_parsed_rule(parsed)
+        except ValueError as exc:
+            raise ValueError(f"line {line_number}: {exc}") from exc
+        if rule is not None:
+            rules.append(rule)
+    if require_rules and not rules:
+        raise ValueError("source contains no supported rules")
+    return rules
 
 
 # Policy of the reject rulesets (00-Ads-Reject, 27-Ads-Reject-Heavy).
@@ -543,6 +656,22 @@ SERVICE_ALLOWLIST = frozenset(
         "statsig.com",        # OpenAI/ChatGPT feature-flag + experimentation (08-AI); 00 REJECTed api.statsig.com
         "statsigapi.net",     # statsig API host; 00 REJECTed it outright
         "featureassets.org",  # OpenAI feature-assets host (08-AI)
+        "oaistatsig.com",     # OpenAI feature flags
+        "safebrowsing.googleapis.com",
+        "safebrowsing.google.com",
+        "sb-ssl.google.com",
+        "safebrowsing.apple",
+        "safebrowsing.g.applimg.com",
+        "safebrowsing.urlsec.qq.com",
+        "safebrowsing.urlsec.gg.com",
+        "crl.microsoft.com",  # certificate revocation checks
+        "activate.adobe.com",
+        "licenses.adobe.com",
+        "na1r.services.adobe.com",
+        "api.iqiyi.com",
+        "httpdns.alicdn.com",  # shared functional DNS endpoint
+        "sdb.amazonaws.com",  # Amazon SimpleDB API
+        "staticxx.facebook.com",  # official Facebook SDK cross-domain authentication bridge
     }
 )
 
@@ -561,6 +690,7 @@ class CompileStats:
     duplicates_dropped: int
     covered_dropped: int
     allowlisted_dropped: int = 0
+    excluded_dropped: int = 0
 
 
 @dataclass(frozen=True)
@@ -582,31 +712,75 @@ def compile_rules(rulesets: list[RuleSet], source_contents: dict[str, str]) -> C
     duplicate_count = 0
     covered_count = 0
     allowlisted_count = 0
+    excluded_count = 0
     failures: list[str] = []
     compiled: dict[str, list[Rule]] = {}
+    parsed_sources: dict[tuple[str, str], list[Rule]] = {}
 
-    for ruleset in rulesets:
-        raw_lines: list[str] = []
-        for source in ruleset.sources:
-            raw_lines.extend(source_contents.get(source, "").splitlines())
-        raw_lines.extend(ruleset.additions)
-        for source in ruleset.json_prefix_sources:
+    def source_rules(source: str, kind: str) -> list[Rule]:
+        key = (source, kind)
+        if key not in parsed_sources:
             raw = source_contents.get(source)
             if raw is None:
-                continue
-            try:
-                raw_lines.extend(json_prefix_rules(raw, source))
-            except ValueError as exc:
-                failures.append(f"{source}: JSON_PARSE: {exc}")
+                failures.append(f"{source}: SOURCE_MISSING: required source was not fetched")
+                parsed_sources[key] = []
+            else:
+                try:
+                    if kind == "JSON":
+                        parsed_sources[key] = _text_source_rules("\n".join(json_prefix_rules(raw, source)))
+                    else:
+                        parsed_sources[key] = _text_source_rules(raw)
+                except ValueError as exc:
+                    label = "JSON_PARSE" if kind == "JSON" else "SOURCE_PARSE"
+                    failures.append(f"{source}: {label}: {exc}")
+                    parsed_sources[key] = []
+        return parsed_sources[key]
 
-        kept: list[Rule] = []
-        for raw in raw_lines:
-            rule = accept_rule(raw)
-            if rule is None:
+    for ruleset in rulesets:
+        candidates: list[Rule] = []
+        for source in ruleset.sources:
+            candidates.extend(source_rules(source, "TEXT"))
+        try:
+            candidates.extend(_text_source_rules("\n".join(ruleset.additions), require_rules=False))
+        except ValueError as exc:
+            failures.append(f"{ruleset.file}: ADDITIONS_PARSE: {exc}")
+        for source in ruleset.json_prefix_sources:
+            candidates.extend(source_rules(source, "JSON"))
+
+        try:
+            exclusions = {
+                (rule.rule_type, rule.value.lower())
+                for rule in _text_source_rules("\n".join(ruleset.exclusions), require_rules=False)
+            }
+        except ValueError as exc:
+            failures.append(f"{ruleset.file}: EXCLUSIONS_PARSE: {exc}")
+            exclusions = set()
+
+        eligible: list[Rule] = []
+        for rule in candidates:
+            if (rule.rule_type, rule.value.lower()) in exclusions:
+                excluded_count += 1
                 continue
             if ruleset.policy == REJECT_POLICY and is_service_allowlisted(rule):
                 allowlisted_count += 1
                 continue
+            eligible.append(rule)
+
+        # A suffix anywhere in the same policy file covers narrower domain rows even when
+        # it follows them upstream. Compute this before adding anything to the cross-file
+        # index so discarded rows cannot accidentally influence later policy ownership.
+        local_suffixes = {
+            rule.value.lower().strip(".") for rule in eligible if rule.rule_type == "DOMAIN-SUFFIX"
+        }
+
+        kept: list[Rule] = []
+        for rule in eligible:
+            if rule.rule_type in {"DOMAIN", "DOMAIN-SUFFIX"}:
+                labels = rule.value.lower().strip(".").split(".")
+                start = 1 if rule.rule_type == "DOMAIN-SUFFIX" else 0
+                if any(".".join(labels[offset:]) in local_suffixes for offset in range(start, len(labels))):
+                    covered_count += 1
+                    continue
             if ruleset.no_resolve and rule.rule_type.startswith("IP-") and "no-resolve" not in rule.modifiers:
                 rule = Rule(rule.rule_type, rule.value, rule.modifiers + ("no-resolve",))
             # exact_tag dedups within and across files alike (add() populates the index for
@@ -629,6 +803,7 @@ def compile_rules(rulesets: list[RuleSet], source_contents: dict[str, str]) -> C
             duplicates_dropped=duplicate_count,
             covered_dropped=covered_count,
             allowlisted_dropped=allowlisted_count,
+            excluded_dropped=excluded_count,
         ),
         failures=failures,
     )
@@ -683,24 +858,94 @@ def render_tree(compiled: dict[str, list[Rule]], rulesets: list[RuleSet], dialec
 
 def stats_lines(stats: CompileStats) -> list[str]:
     """Human-readable stat lines shared by the build shell and the drift checker."""
-    return [
+    lines = [
         f"generated={stats.generated}",
         f"duplicates_dropped={stats.duplicates_dropped}",
         f"covered_later_rules_dropped={stats.covered_dropped}",
         f"service_allowlisted_dropped={stats.allowlisted_dropped}",
     ]
+    if stats.excluded_dropped:
+        lines.append(f"reviewed_exclusions_dropped={stats.excluded_dropped}")
+    return lines
+
+
+def _write_results(trees: list[tuple[Path, dict[str, str]]], verify=None) -> None:
+    """Stage and verify every tree, then publish them with rollback on a write/swap failure.
+
+    Each stage/backup is a sibling of its destination, so directory renames stay on the same
+    filesystem. Files outside the generated .list/manifest set retain write_result's behavior.
+    """
+    import shutil
+    import tempfile
+
+    staged: list[tuple[Path, Path]] = []
+    backups: dict[Path, Path] = {}
+    backup_roots: list[Path] = []
+    published: list[Path] = []
+    committed = False
+    try:
+        for output_dir, files in trees:
+            output_dir.parent.mkdir(parents=True, exist_ok=True)
+            stage = Path(tempfile.mkdtemp(prefix=".generated-stage-", dir=output_dir.parent))
+            staged.append((output_dir, stage))
+            if output_dir.exists():
+                for retained in output_dir.iterdir():
+                    if retained.name == "MANIFEST.csv" or retained.suffix == ".list":
+                        continue
+                    destination = stage / retained.name
+                    if retained.is_dir() and not retained.is_symlink():
+                        shutil.copytree(retained, destination, symlinks=True)
+                    else:
+                        shutil.copy2(retained, destination, follow_symlinks=False)
+            for name, text in files.items():
+                if Path(name).name != name or name in {".", ".."}:
+                    raise ValueError(f"invalid generated filename: {name}")
+                (stage / name).write_text(text, encoding="utf-8", newline="\n")
+            for name, text in files.items():
+                if (stage / name).read_bytes() != text.encode("utf-8"):
+                    raise ValueError(f"staged generated file failed byte verification: {output_dir / name}")
+            if verify is not None:
+                verify(output_dir, stage)
+            if output_dir.exists():
+                shutil.copymode(output_dir, stage)
+
+        for output_dir, stage in staged:
+            if output_dir.exists():
+                backup_root = Path(tempfile.mkdtemp(prefix=".generated-backup-", dir=output_dir.parent))
+                backup_roots.append(backup_root)
+                backup = backup_root / "previous"
+                output_dir.rename(backup)
+                backups[output_dir] = backup
+            stage.rename(output_dir)
+            published.append(output_dir)
+        committed = True
+    except (OSError, ValueError) as exc:
+        rollback_errors: list[str] = []
+        for output_dir, _stage in reversed(staged):
+            try:
+                if output_dir in published:
+                    shutil.rmtree(output_dir)
+                backup = backups.get(output_dir)
+                if backup is not None:
+                    backup.rename(output_dir)
+            except OSError as rollback_error:
+                rollback_errors.append(f"{output_dir}: {rollback_error}; previous tree retained at {backups.get(output_dir)}")
+        if rollback_errors:
+            raise OSError(f"{exc}; rollback failed: {'; '.join(rollback_errors)}") from exc
+        raise
+    finally:
+        for _output_dir, stage in staged:
+            if stage.exists():
+                shutil.rmtree(stage, ignore_errors=True)
+        for backup_root in backup_roots:
+            # Preserve the previous snapshot for manual recovery if rollback itself failed.
+            if committed or not (backup_root / "previous").exists():
+                shutil.rmtree(backup_root, ignore_errors=True)
 
 
 def write_result(output_dir: Path, files: dict[str, str]) -> None:
-    """Replace the generated artefacts on disk with ``files``. No policy, no decisions."""
-    output_dir.mkdir(parents=True, exist_ok=True)
-    for stale in output_dir.glob("*.list"):
-        stale.unlink()
-    manifest_path = output_dir / "MANIFEST.csv"
-    if manifest_path.exists():
-        manifest_path.unlink()
-    for file_name, text in files.items():
-        (output_dir / file_name).write_text(text)
+    """Safely replace one generated tree; build publishes all dialects together."""
+    _write_results([(output_dir, files)])
 
 
 def build(rules_dir: Path, strict: bool, allow_partial: bool = False) -> int:
@@ -716,8 +961,31 @@ def build(rules_dir: Path, strict: bool, allow_partial: bool = False) -> int:
             print("FAIL: refusing to overwrite generated rules after upstream fetch or parse failures", file=sys.stderr)
             return 1
 
-    for dialect in DIALECTS:
-        write_result(rules_dir / dialect.subdir / "generated", render_tree(result.compiled, RULESETS, dialect))
+    from validate_generated import validate_generated_tree
+
+    dialect_by_output = {
+        rules_dir / dialect.subdir / "generated": dialect for dialect in DIALECTS
+    }
+
+    def verify(output_dir: Path, stage: Path) -> None:
+        errors = validate_generated_tree(
+            stage,
+            dialect=dialect_by_output[output_dir].name,
+            rulesets=RULESETS,
+            allow_empty=allow_partial,
+        )
+        if errors:
+            raise ValueError("staged generated tree is invalid: " + "; ".join(errors))
+
+    try:
+        trees = [
+            (output_dir, render_tree(result.compiled, RULESETS, dialect))
+            for output_dir, dialect in dialect_by_output.items()
+        ]
+        _write_results(trees, verify=verify)
+    except (OSError, ValueError) as exc:
+        print(f"BUILD_FAIL: {exc}", file=sys.stderr)
+        return 1
 
     for line in stats_lines(result.stats):
         print(line)

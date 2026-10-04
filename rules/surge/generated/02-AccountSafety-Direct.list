@@ -5,7 +5,6 @@
 # China-region auth/payment foundations stay DIRECT. App domains stay in their dedicated service groups.
 
 DOMAIN-SUFFIX,wechat.com
-DOMAIN-SUFFIX,weixin.qq.com
 DOMAIN-SUFFIX,qq.com
 DOMAIN-SUFFIX,qpic.cn
 DOMAIN-SUFFIX,gtimg.cn
