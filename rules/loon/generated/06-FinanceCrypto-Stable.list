@@ -245,3 +245,7 @@ DOMAIN-SUFFIX,deribit.com
 DOMAIN-SUFFIX,bitget.com
 DOMAIN-SUFFIX,bitget.fit
 DOMAIN-SUFFIX,coinank.com
+DOMAIN-SUFFIX,hypurrscan.io
+DOMAIN,api.hyperliquid.xyz
+DOMAIN,api-ui.hyperliquid.xyz
+DOMAIN,rpc.hyperliquid.xyz

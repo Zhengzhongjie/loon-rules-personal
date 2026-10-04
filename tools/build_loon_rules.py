@@ -115,7 +115,7 @@ RULESETS: list[RuleSet] = [
         "Mainland-Services-Direct",
         "DIRECT",
         tuple(blackmatrix(name) for name in ("Baidu", "WeChat", "Tencent", "Alibaba", "NetEase")),
-        additions=("DOMAIN-SUFFIX,gaokao.cn",),
+        additions=("DOMAIN-SUFFIX,gaokao.cn", "DOMAIN-SUFFIX,zbrowser.cn"),
         notes=("Keep the Gaokao service direct when migrating private inline rules.",),
     ),
     RuleSet(
@@ -200,6 +200,11 @@ RULESETS: list[RuleSet] = [
             "DOMAIN-SUFFIX,bitget.com",
             "DOMAIN-SUFFIX,bitget.fit",
             "DOMAIN-SUFFIX,coinank.com",
+            "DOMAIN-SUFFIX,hypurrscan.io",
+            # Hypurrscan's public data requests use this separate API origin.
+            "DOMAIN,api.hyperliquid.xyz",
+            "DOMAIN,api-ui.hyperliquid.xyz",
+            "DOMAIN,rpc.hyperliquid.xyz",
         ),
         notes=("Use a manually selected stable policy. Avoid frequent automatic region switching.",),
     ),
@@ -280,7 +285,13 @@ RULESETS: list[RuleSet] = [
     RuleSet("19-Google.list", "Google", "Google", tuple(blackmatrix(name) for name in ("GoogleVoice", "GoogleDrive", "Google"))),
     RuleSet("20-GitHub.list", "GitHub", "GitHub", (blackmatrix("GitHub"),)),
     RuleSet("21-Developer-Collab.list", "Developer-Collab", "开发协作", tuple(blackmatrix(name) for name in ("GitLab", "Docker", "Dropbox"))),
-    RuleSet("22-Global-Social-Info.list", "Global-Social-Info", "海外社交资讯", tuple(blackmatrix(name) for name in ("Twitter", "Discord", "Reddit", "Wikipedia"))),
+    RuleSet(
+        "22-Global-Social-Info.list",
+        "Global-Social-Info",
+        "海外社交资讯",
+        tuple(blackmatrix(name) for name in ("Twitter", "Discord", "Reddit", "Wikipedia")),
+        additions=("DOMAIN-SUFFIX,financialresearch.gov",),
+    ),
     RuleSet(
         "23-Streaming.list",
         "Streaming",

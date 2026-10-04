@@ -161,13 +161,21 @@ def check_rule_section(cfg: LoonConfig) -> list[str]:
     errors: list[str] = []
     if not cfg.rule_lines or cfg.rule_lines[-1] != "FINAL,全局代理" or cfg.rule_lines.count("FINAL,全局代理") != 1:
         errors.append("[Rule] must end with exactly one FINAL,全局代理")
+    # Allow authored domain supplements locally while remote subscriptions refresh.
+    reviewed_supplements = {
+        f"{rule},{ruleset.policy}"
+        for ruleset in build_loon_rules.RULESETS
+        for rule in ruleset.additions
+        if rule.startswith(("DOMAIN,", "DOMAIN-SUFFIX,"))
+    }
     unexpected = [
-        line for line in cfg.rule_lines if line != "FINAL,全局代理" and not _is_device_local_ip_rule(line)
+        line for line in cfg.rule_lines
+        if line != "FINAL,全局代理" and line not in reviewed_supplements and not _is_device_local_ip_rule(line)
     ]
     if unexpected:
         errors.append(
-            "[Rule] may contain only device-local IP-CIDR exceptions before FINAL; "
-            "service and regex rules belong in generated subscriptions"
+            "[Rule] may contain only device-local IP-CIDR exceptions or reviewed domain supplements before FINAL; "
+            "other service and regex rules belong in generated subscriptions"
         )
     return errors
 

@@ -100,9 +100,38 @@ def test_check_policy_groups():
     assert any("missing policy group" in e for e in v.check_policy_groups(mk()))
 
 
+def test_reviewed_direct_supplement_requires_exact_domain_and_policy():
+    assert v.check_rule_section(mk(rule_lines=["DOMAIN-SUFFIX,zbrowser.cn,DIRECT", "FINAL,全局代理"])) == []
+    for rule in (
+        "DOMAIN-SUFFIX,zbrowser.cn,AI",
+        "DOMAIN-SUFFIX,cn,DIRECT",
+        "DOMAIN-SUFFIX,unreviewed.example,DIRECT",
+    ):
+        assert v.check_rule_section(mk(rule_lines=[rule, "FINAL,全局代理"]))
+
+
 def test_check_remote_tags_passes_in_exact_order():
     rules = [v.RemoteRule(f"u{tag}", tag, "P") for tag in v.REMOTE_RULE_ORDER]
     assert v.check_remote_tags(mk(remote_rules=rules)) == []
+
+
+def test_financial_site_supplements_require_their_authored_policy():
+    rules = [
+        "DOMAIN-SUFFIX,financialresearch.gov,海外社交资讯",
+        "DOMAIN-SUFFIX,hypurrscan.io,金融加密",
+        "DOMAIN,api.hyperliquid.xyz,金融加密",
+        "DOMAIN,api-ui.hyperliquid.xyz,金融加密",
+        "DOMAIN,rpc.hyperliquid.xyz,金融加密",
+        "FINAL,全局代理",
+    ]
+    assert v.check_rule_section(mk(rule_lines=rules)) == []
+    for rule in (
+        "DOMAIN-SUFFIX,financialresearch.gov,DIRECT",
+        "DOMAIN-SUFFIX,hypurrscan.io,全局代理",
+        "DOMAIN,api.hyperliquid.xyz,全局代理",
+        "DOMAIN-SUFFIX,gov,海外社交资讯",
+    ):
+        assert v.check_rule_section(mk(rule_lines=[rule, "FINAL,全局代理"]))
 
 
 def test_check_remote_tags_flags_missing_and_mismatch():

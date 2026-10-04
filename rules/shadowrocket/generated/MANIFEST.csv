@@ -4,12 +4,12 @@
 Ads-Reject,广告分流,rules/shadowrocket/generated/00-Ads-Reject.list,2935
 LAN-Direct,DIRECT,rules/shadowrocket/generated/01-LAN-Direct.list,12
 AccountSafety-DIRECT,DIRECT,rules/shadowrocket/generated/02-AccountSafety-Direct.list,12
-Mainland-Services-Direct,DIRECT,rules/shadowrocket/generated/03-Mainland-Services-Direct.list,491
+Mainland-Services-Direct,DIRECT,rules/shadowrocket/generated/03-Mainland-Services-Direct.list,492
 Seetong-Local,Seetong,rules/shadowrocket/generated/04-Seetong.list,2
 PayPal-Stable,PayPal,rules/shadowrocket/generated/05-PayPal-Stable.list,247
 TradingView-Fast,TradingView,rules/shadowrocket/generated/05-TradingView-Fast.list,3
 Binance-Geo,Binance,rules/shadowrocket/generated/05-Binance-Geo.list,14
-FinanceCrypto-Stable,金融加密,rules/shadowrocket/generated/06-FinanceCrypto-Stable.list,241
+FinanceCrypto-Stable,金融加密,rules/shadowrocket/generated/06-FinanceCrypto-Stable.list,245
 Adobe,Adobe,rules/shadowrocket/generated/07-Adobe.list,181
 Claude,Claude,rules/shadowrocket/generated/08-Claude.list,6
 AI,AI,rules/shadowrocket/generated/08-AI.list,121
@@ -26,7 +26,7 @@ YouTube,YouTube,rules/shadowrocket/generated/18-YouTube.list,189
 Google,Google,rules/shadowrocket/generated/19-Google.list,672
 GitHub,GitHub,rules/shadowrocket/generated/20-GitHub.list,29
 Developer-Collab,开发协作,rules/shadowrocket/generated/21-Developer-Collab.list,29
-Global-Social-Info,海外社交资讯,rules/shadowrocket/generated/22-Global-Social-Info.list,76
+Global-Social-Info,海外社交资讯,rules/shadowrocket/generated/22-Global-Social-Info.list,77
 Streaming,境外流媒体,rules/shadowrocket/generated/23-Streaming.list,1671
 Amazon,Amazon,rules/shadowrocket/generated/24-Amazon.list,187
 Talkatone,全局代理,rules/shadowrocket/generated/25-Talkatone.list,6

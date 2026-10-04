@@ -64,6 +64,32 @@ Use this order in `[Remote Rule]`:
 - Finance/crypto rules should use a manually selected stable route, not frequent automatic region switching.
 - The original upstream subscriptions are build inputs only. The Loon config should subscribe to generated repository rules to avoid duplicate and shadowed entries.
 
+## Reviewed site supplements (2026-10-04)
+
+| Domain (including subdomains) | Rule list | Policy |
+| --- | --- | --- |
+| `zbrowser.cn` | `Mainland-Services-Direct` | `DIRECT` |
+| `financialresearch.gov` | `Global-Social-Info` | `海外社交资讯` |
+| `hypurrscan.io` | `FinanceCrypto-Stable` | `金融加密` |
+| `api.hyperliquid.xyz` (exact host) | `FinanceCrypto-Stable` | `金融加密` |
+| `api-ui.hyperliquid.xyz` (exact host) | `FinanceCrypto-Stable` | `金融加密` |
+| `rpc.hyperliquid.xyz` (exact host) | `FinanceCrypto-Stable` | `金融加密` |
+
+These supplements are authored in `tools/build_loon_rules.py` and included in
+all three generated dialect trees and their manifests. Private Loon configs may
+also bind these exact domain/policy pairs in `[Rule]` before `FINAL` so the
+rules apply while remote subscriptions refresh. Preserve existing policy-group
+choices and order; the supplements do not select an egress node or establish
+that a failing chart or API has recovered.
+
+The OFR chart page declares `https://data.financialresearch.gov/hf/` as its
+data API, covered by the OFR suffix rule. Hypurrscan's page separately references
+`https://api.hyperliquid.xyz/info`; its application bundle also declares the
+`api-ui.hyperliquid.xyz` API and `rpc.hyperliquid.xyz` EVM backup/WebSocket.
+Bind those exact hosts to the same finance policy
+so page and data requests use the same selection. Do not exempt all Hyperliquid
+subdomains from ad filtering (for example, its existing metrics reject rule).
+
 ## Test command
 
 ```sh
