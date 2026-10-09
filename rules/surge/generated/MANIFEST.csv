@@ -9,7 +9,7 @@ Seetong-Local,Seetong,rules/surge/generated/04-Seetong.list,2
 PayPal-Stable,PayPal,rules/surge/generated/05-PayPal-Stable.list,247
 TradingView-Fast,TradingView,rules/surge/generated/05-TradingView-Fast.list,3
 Binance-Geo,Binance,rules/surge/generated/05-Binance-Geo.list,14
-FinanceCrypto-Stable,金融加密,rules/surge/generated/06-FinanceCrypto-Stable.list,247
+FinanceCrypto-Stable,金融加密,rules/surge/generated/06-FinanceCrypto-Stable.list,301
 Adobe,Adobe,rules/surge/generated/07-Adobe.list,181
 Claude,Claude,rules/surge/generated/08-Claude.list,6
 Gemini,Google,rules/surge/generated/08-Gemini.list,13

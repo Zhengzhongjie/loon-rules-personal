@@ -103,6 +103,51 @@ Bind those exact hosts to the same finance policy
 so page and data requests use the same selection. Do not exempt all Hyperliquid
 subdomains from ad filtering (for example, its existing metrics reject rule).
 
+## Crypto DEX and tool coverage (2026-10-09)
+
+The following reviewed supplements belong to `FinanceCrypto-Stable` and use
+the existing `金融加密` policy in Loon, Shadowrocket and Surge. Domains below
+include subdomains unless marked as exact hosts. Existing Uniswap, PancakeSwap,
+Sushi, Raydium, Phantom, DeBank, DefiLlama and DEXTools coverage is also pinned
+in the builder's local additions so it does not depend solely on upstream lists.
+
+| Service | Reviewed domains / hosts | Official source |
+| --- | --- | --- |
+| 1inch | `1inch.com`, `1inch.network`; retain existing `1inch.io` | [Domain and API migration](https://help.1inch.com/en/articles/12360054-rebranding-faq) |
+| Curve | `curve.finance` | [Domain incident and replacement frontend](https://news.curve.finance/curve-domain-incident/) |
+| Balancer | `balancer.fi` | [Documentation](https://docs.balancer.fi/) |
+| CoW Swap | `cow.fi` | [API documentation](https://docs.cow.fi/cow-protocol/integrate/api) |
+| Jupiter | `jup.ag` | [Swap API](https://developers.jup.ag/docs/api-reference/swap/v1/swap) |
+| Orca | `orca.so` | [API documentation](https://docs.orca.so/api-reference/overview) |
+| Meteora | `meteora.ag` | [Data API](https://docs.meteora.ag/developer-guides/dlmm/api-reference/overview.md) |
+| Aerodrome / Velodrome | `aerodrome.finance`, `velodrome.finance` | [Aerodrome](https://aerodrome.finance/), [Velodrome](https://velodrome.finance/) |
+| Osmosis | `osmosis.zone` | [Endpoints](https://docs.osmosis.zone/integrate/endpoints/) |
+| GMX | `gmx.io`, `gmxalt.io`, `gmxapi.io`, `gmxapi.ai`, `gmxinfra.io`, `gmxinfra2.io` | [Frontend](https://docs.gmx.io/docs/api/frontend-integration/), [API URLs](https://docs.gmx.io/docs/api/gmx-api/gmx-io-gmx-public-api/), [Fallback URLs](https://docs.gmx.io/docs/api/rest-api/fallback-urls/) |
+| dYdX | `dydx.trade`, `dydx.xyz`; retain existing `dydx.exchange` | [Endpoints](https://docs.dydx.xyz/interaction/endpoints) |
+| Drift | `drift.trade` | [Official frontend](https://www.drift.trade/) |
+| Hyperliquid | `hyperfoundation.org`; exact `hyperliquid.xyz`, `app.hyperliquid.xyz`, plus the existing three API/RPC hosts | [Official support guide](https://hyperliquid.gitbook.io/hyperliquid-docs/support/read-me-support-guide) |
+| MetaMask | Exact `metamask.io`, `www.metamask.io`, `portfolio.metamask.io`, `link.metamask.io`, `docs.metamask.io`, `support.metamask.io`, `bridge.api.cx.metamask.io`, `tokens.api.cx.metamask.io`, `gas.api.cx.metamask.io` | [Website](https://metamask.io/), [Portfolio](https://support.metamask.io/manage-crypto/portfolio/), [Functional API origins](https://github.com/MetaMask/metamask-extension/blob/main/shared/constants/swaps.ts) |
+| Rabby / Trust Wallet | `rabby.io`, `trustwallet.com` | [Rabby](https://rabby.io/), [Trust Wallet](https://trustwallet.com/) |
+| WalletConnect / Reown | `walletconnect.com`, `walletconnect.org`, `reown.com` | [WalletConnect](https://walletconnect.com/), [Relay origin](https://github.com/WalletConnect/walletconnect-monorepo/blob/v2.0/packages/core/src/constants/relayer.ts), [Reown](https://reown.com/) |
+| Zerion | `zerion.io` | [Official website](https://zerion.io/) |
+| DEX Screener / GeckoTerminal / Birdeye | `dexscreener.com`, `geckoterminal.com`, `birdeye.so` | [DEX Screener API](https://docs.dexscreener.com/api/reference), [GeckoTerminal](https://www.geckoterminal.com/), [Birdeye](https://birdeye.so/) |
+| Dune | `dune.com`; retain existing `duneanalytics.com` | [Official website](https://dune.com/home) |
+| DefiLlama | `llama.fi`, plus existing `defillama.com` | [Free and Pro API origins](https://api-docs.defillama.com/) |
+| Chain explorers | `solscan.io`, `arbiscan.io`, `basescan.org`, `polygonscan.com` | [Solscan](https://solscan.io/), [Arbiscan](https://arbiscan.io/), [BaseScan](https://basescan.org/), [PolygonScan](https://polygonscan.com/) |
+| LI.FI / Jumper | `li.fi`, `li.quest`, `jumper.xyz`, `jumper.exchange` | [LI.FI API base URL](https://docs.li.fi/api-reference/introduction), [Jumper legacy entry redirects to current domain](https://jumper.exchange/) |
+| Across / Stargate | `across.to`, `stargate.finance` | [Across](https://across.to/), [Stargate](https://stargate.finance/) |
+| Revoke.cash | `revoke.cash` | [Approval management](https://revoke.cash/) |
+
+Hyperliquid and MetaMask use exact functional hosts to keep
+`metrics.hyperliquid.xyz` and `mm-sdk-analytics.api.cx.metamask.io` eligible
+for the optional Heavy reject rules. WalletConnect's legacy `.org` domain
+remains necessary for `relay.walletconnect.org`. Shared CDN and third-party
+RPC provider domains are not added to this policy.
+
+The generated lists were compiled from the committed, reviewed rule bodies
+plus these additions, preserving the other lists without an upstream refresh.
+Future normal builds and drift checks use the same authored additions.
+
 ## Test command
 
 ```sh
