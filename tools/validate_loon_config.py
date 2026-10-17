@@ -209,13 +209,20 @@ def check_rule_section(cfg: LoonConfig) -> list[str]:
         for rule in ruleset.additions
         if rule.startswith(("DOMAIN,", "DOMAIN-SUFFIX,"))
     }
+    # ATAS logs in to literal public IPs. Allow only the individually reviewed
+    # /32 hosts, finance policy and no-resolve; arbitrary public IPs stay rejected.
+    reviewed_supplements.update(
+        f"IP-CIDR,{ip}/32,金融加密,no-resolve"
+        for ip in build_loon_rules.ATAS_SERVER_IPS
+    )
+    reviewed_supplements.update(build_loon_rules.ATAS_MAC_PROCESS_RULES)
     unexpected = [
         line for line in cfg.rule_lines
         if line != "FINAL,全局代理" and line not in reviewed_supplements and not _is_device_local_ip_rule(line)
     ]
     if unexpected:
         errors.append(
-            "[Rule] may contain only device-local IP-CIDR exceptions or reviewed domain supplements before FINAL; "
+            "[Rule] may contain only device-local IP-CIDR exceptions or reviewed domain/ATAS supplements before FINAL; "
             "other service and regex rules belong in generated subscriptions"
         )
     return errors

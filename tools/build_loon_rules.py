@@ -49,6 +49,53 @@ CLAUDE_BASELINE_RULES: tuple[str, ...] = tuple(
     f"DOMAIN-SUFFIX,{domain}" for domain in CLAUDE_FIRST_PARTY_SUFFIXES
 ) + tuple(f"DOMAIN,{host}" for host in CLAUDE_EXACT_HOSTS)
 
+# ATAS X 8.0.15.654: vendor domains from the installed application, auth hosts
+# from AvaliableServers.cnf, and data hosts from authenticated connection logs.
+# Literal-IP connections need exact /32 rules. See docs/atas-routing-2026-10-09.md.
+ATAS_NTP_HOSTS: tuple[str, ...] = ("sntp.atas.net",)
+ATAS_DATA_PROVIDER_SUFFIXES: tuple[str, ...] = ("dxfeed.com",)
+# Mac-only fallback for dynamically advertised ATAS servers. Match the observed
+# process AND vendor-protocol port; never route every process/port or all HTTPS.
+# These inline rules do not enter the portable generated subscriptions.
+ATAS_MAC_SERVER_PORTS: tuple[int, ...] = (6214, 6450, 6452, 8274, 8450, 8451, 8456)
+ATAS_MAC_PROCESS_RULES: tuple[str, ...] = tuple(
+    f"AND,((PROCESS-NAME,ATAS X),(DEST-PORT,{port})),金融加密"
+    for port in ATAS_MAC_SERVER_PORTS
+) + ("AND,((PROCESS-NAME,ATAS X),(DEST-PORT,123)),DIRECT",)
+ATAS_FIRST_PARTY_SUFFIXES: tuple[str, ...] = (
+    "atas.net",
+    "orderflowtrading.net",
+    "orderflowtrading.ru",
+)
+ATAS_EXACT_HOSTS: tuple[str, ...] = (
+    "atas.featurebase.app",
+    "feed.financialjuice.com",
+)
+ATAS_AUTH_SERVER_IPS: tuple[str, ...] = (
+    "51.178.130.10",       # F2
+    "142.132.201.231",     # E2
+    "65.21.32.251",        # R2
+    "135.181.115.236",     # T2
+)
+# Advertised/used only after successful authentication; observed in the current
+# workspace's Crypto data, Crypto Sim and history/cache connections.
+ATAS_DATA_SERVER_IPS: tuple[str, ...] = (
+    "116.202.174.36",
+    "178.105.188.57",
+    "157.180.79.0",
+    "51.89.6.194",
+    "65.21.228.47",
+    "51.89.20.177",
+    "65.108.201.31",
+)
+ATAS_SERVER_IPS = ATAS_AUTH_SERVER_IPS + ATAS_DATA_SERVER_IPS
+ATAS_BASELINE_RULES: tuple[str, ...] = (
+    tuple(f"DOMAIN-SUFFIX,{domain}" for domain in
+          ATAS_FIRST_PARTY_SUFFIXES + ATAS_DATA_PROVIDER_SUFFIXES)
+    + tuple(f"DOMAIN,{host}" for host in ATAS_EXACT_HOSTS)
+    + tuple(f"IP-CIDR,{ip}/32,no-resolve" for ip in ATAS_SERVER_IPS)
+)
+
 
 @dataclass(frozen=True)
 class RuleSet:
@@ -89,8 +136,10 @@ RULESETS: list[RuleSet] = [
             "DOMAIN-SUFFIX,local",
             "IP-CIDR,169.254.0.0/16,no-resolve",
             "IP-CIDR,224.0.0.0/4,no-resolve",
+            # Verified UDP/123 reply on DIRECT; finance proxy timed out.
+            *(f"DOMAIN,{host}" for host in ATAS_NTP_HOSTS),
         ),
-        notes=("LAN and private network direct rules.",),
+        notes=("LAN/private networks and reviewed UDP time-service direct exceptions.",),
     ),
     RuleSet(
         "02-AccountSafety-Direct.list",
@@ -173,7 +222,7 @@ RULESETS: list[RuleSet] = [
         "FinanceCrypto-Stable",
         "金融加密",
         tuple(blackmatrix(name) for name in ("OKX", "Crypto", "Bloomberg")),
-        additions=(
+        additions=ATAS_BASELINE_RULES + (
             "DOMAIN-SUFFIX,stripecdn.com",
             "DOMAIN-SUFFIX,binance.us",
             "DOMAIN-SUFFIX,oklink.com",
@@ -654,6 +703,9 @@ REJECT_POLICY = "广告分流"
 SERVICE_ALLOWLIST = frozenset(
     {
         *CLAUDE_FIRST_PARTY_SUFFIXES,
+        *ATAS_FIRST_PARTY_SUFFIXES,
+        *ATAS_DATA_PROVIDER_SUFFIXES,
+        *ATAS_EXACT_HOSTS,
         "servd-anthropic-website.b-cdn.net",
         "statsig.com",        # OpenAI/ChatGPT feature-flag + experimentation (08-AI); 00 REJECTed api.statsig.com
         "statsigapi.net",     # statsig API host; 00 REJECTed it outright

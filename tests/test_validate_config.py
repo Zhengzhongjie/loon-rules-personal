@@ -114,6 +114,26 @@ def test_check_rule_section_allows_private_device_ip_exception_only():
     assert v.check_rule_section(mk(rule_lines=["URL-REGEX,\\.log\\.,REJECT", "FINAL,全局代理"])) != []
 
 
+def test_reviewed_atas_auth_host_may_be_pinned_while_subscription_refreshes():
+    good = "IP-CIDR,135.181.115.236/32,金融加密,no-resolve"
+    assert v.check_rule_section(mk(rule_lines=[good, "FINAL,全局代理"])) == []
+    for bad in (good.replace("/32", "/24"), good.replace("金融加密", "DIRECT"),
+                good.replace(".236/", ".237/"), good.replace(",no-resolve", "")):
+        assert v.check_rule_section(mk(rule_lines=[bad, "FINAL,全局代理"]))
+
+
+def test_atas_mac_dynamic_server_fallback_requires_process_and_reviewed_port():
+    good = "AND,((PROCESS-NAME,ATAS X),(DEST-PORT,6452)),金融加密"
+    assert v.check_rule_section(mk(rule_lines=[good, "FINAL,全局代理"])) == []
+    for bad in ("PROCESS-NAME,ATAS X,金融加密", "DEST-PORT,6452,金融加密",
+                good.replace("6452", "443"), good.replace("ATAS X", "Other App"),
+                good.replace("金融加密", "DIRECT")):
+        assert v.check_rule_section(mk(rule_lines=[bad, "FINAL,全局代理"]))
+    ntp = "AND,((PROCESS-NAME,ATAS X),(DEST-PORT,123)),DIRECT"
+    assert v.check_rule_section(mk(rule_lines=[ntp, "FINAL,全局代理"])) == []
+    assert v.check_rule_section(mk(rule_lines=[ntp.replace("DIRECT", "金融加密"), "FINAL,全局代理"]))
+
+
 @pytest.mark.parametrize("ip", ["10.2.3.4", "172.16.7.8", "192.168.2.1"])
 def test_check_rule_section_allows_rfc1918_direct_host_exception(ip):
     rule = f"IP-CIDR,{ip}/32,DIRECT,no-resolve"

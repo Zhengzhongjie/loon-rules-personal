@@ -22,6 +22,7 @@ Personal Loon routing notes, supplemental rule lists, and validation tooling.
 - `tools/optimize_loon_config.py`: validates and updates both private Loon configs with chain-first two-hop defaults, backups and optimistic concurrent-edit checks.
 - `tools/inspect_routing.py`: compares ordered DOMAIN/SUFFIX routing and records offline before/after benchmarks (not Loon device performance).
 - `tools/check_loon_rule_drift.py`: rebuilds every dialect's generated rules in memory and reports upstream drift.
+- `tools/audit_atas_routes.py`: checks ATAS's current server cache, log IPs and vendor domains against the generated finance routes without reading credentials.
 - `tools/validate_loon_config.py`: invariant checks for the local Loon configuration.
 - `tools/validate_shadowrocket_config.py`: dual-mode checks for the Shadowrocket config — committed skeletons (CI) or a filled private `.conf` (local).
 - `tools/validate_surge_config.py`: dual-mode checks for the Surge config — committed skeletons (CI) or a filled private `.conf` (local).
