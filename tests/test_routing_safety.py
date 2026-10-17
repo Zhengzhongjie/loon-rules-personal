@@ -22,6 +22,7 @@ def test_functional_hosts_reach_their_owner_policy(dialect):
         "o207216.ingest.sentry.io": "AI", "unrelated.auth0.com": "FINAL",
         "other.ingest.sentry.io": "FINAL", "unrelated.algolia.net": "FINAL",
         "data.financialresearch.gov": "海外社交资讯", "api.hypurrscan.io": "金融加密",
+        "sec.gov": "金融加密", "www.sec.gov": "金融加密",
         "api.hyperliquid.xyz": "金融加密", "api-ui.hyperliquid.xyz": "金融加密",
         "rpc.hyperliquid.xyz": "金融加密", "down.zbrowser.cn": "DIRECT",
         "www.amazon.com": "Amazon", "atv-ps.amazon.com": "境外流媒体",

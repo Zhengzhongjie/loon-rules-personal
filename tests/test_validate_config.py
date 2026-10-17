@@ -309,6 +309,7 @@ def test_financial_site_supplements_require_their_authored_policy():
     rules = [
         "DOMAIN-SUFFIX,financialresearch.gov,海外社交资讯",
         "DOMAIN-SUFFIX,hypurrscan.io,金融加密",
+        "DOMAIN-SUFFIX,sec.gov,金融加密",
         "DOMAIN,api.hyperliquid.xyz,金融加密",
         "DOMAIN,api-ui.hyperliquid.xyz,金融加密",
         "DOMAIN,rpc.hyperliquid.xyz,金融加密",
@@ -318,6 +319,7 @@ def test_financial_site_supplements_require_their_authored_policy():
     for rule in (
         "DOMAIN-SUFFIX,financialresearch.gov,DIRECT",
         "DOMAIN-SUFFIX,hypurrscan.io,全局代理",
+        "DOMAIN-SUFFIX,sec.gov,全局代理",
         "DOMAIN,api.hyperliquid.xyz,全局代理",
         "DOMAIN-SUFFIX,gov,海外社交资讯",
     ):

@@ -84,6 +84,7 @@ safety checks use this actual order, rather than assuming Heavy runs first.
 | `zbrowser.cn` | `Mainland-Services-Direct` | `DIRECT` |
 | `financialresearch.gov` | `Global-Social-Info` | `海外社交资讯` |
 | `hypurrscan.io` | `FinanceCrypto-Stable` | `金融加密` |
+| `sec.gov` | `FinanceCrypto-Stable` | `金融加密` |
 | `api.hyperliquid.xyz` (exact host) | `FinanceCrypto-Stable` | `金融加密` |
 | `api-ui.hyperliquid.xyz` (exact host) | `FinanceCrypto-Stable` | `金融加密` |
 | `rpc.hyperliquid.xyz` (exact host) | `FinanceCrypto-Stable` | `金融加密` |
@@ -94,6 +95,11 @@ also bind these exact domain/policy pairs in `[Rule]` before `FINAL` so the
 rules apply while remote subscriptions refresh. The supplements do not select an egress node or establish that a failing
 chart or API has recovered. The separately authorized configuration optimizer
 places the chain link selector first and keeps the two-hop wiring intact.
+
+The SEC supplement was added on 2026-10-17 after the original SEC page stalled
+during TLS on the default VPS chain. Routing `sec.gov` through `金融加密` restored
+the page in Chrome. This binds the domain to a policy group; it does not pin a
+particular node or region.
 
 The OFR chart page declares `https://data.financialresearch.gov/hf/` as its
 data API, covered by the OFR suffix rule. Hypurrscan's page separately references

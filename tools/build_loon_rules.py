@@ -210,6 +210,8 @@ RULESETS: list[RuleSet] = [
             "DOMAIN,rpc.hyperliquid.xyz",
             "DOMAIN-SUFFIX,stripe.com",
             "DOMAIN-SUFFIX,stripe.network",
+            # SEC pages stall on the default VPS chain; use the verified finance route.
+            "DOMAIN-SUFFIX,sec.gov",
         ),
         notes=("Use a manually selected stable policy. Avoid frequent automatic region switching.",),
     ),
